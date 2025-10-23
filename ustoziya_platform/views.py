@@ -43,8 +43,8 @@ def dashboard(request):
     # So'nggi materiallar
     recent_materials = Material.objects.filter(author=user).order_by('-created_at')[:5]
     
-    # So'nggi testlar
-    recent_tests = Test.objects.filter(author=user).order_by('-created_at')[:5]
+    # So'nggi testlar - barcha testlarni ko'rsatish (umumiy foydalanish uchun)
+    recent_tests = Test.objects.filter(is_public=True, is_active=True).order_by('-created_at')[:5]
     
     context = {
         'stats': {
@@ -252,6 +252,7 @@ def test_create(request):
             test = Test.objects.create(
                 title=request.POST.get('title'),
                 description=request.POST.get('description', ''),
+                category_id=request.POST.get('category'),
                 subject=request.POST.get('subject'),
                 grade_level=request.POST.get('grade_level'),
                 difficulty=request.POST.get('difficulty'),
@@ -302,7 +303,14 @@ def test_create(request):
                 'error': f'Xatolik yuz berdi: {str(e)}'
             })
     
-    return render(request, 'tests/create.html')
+    # Kategoriyalarni olish
+    from tests.models import TestCategory
+    categories = TestCategory.objects.all()
+    
+    context = {
+        'categories': categories,
+    }
+    return render(request, 'tests/create.html', context)
 
 
 @login_required

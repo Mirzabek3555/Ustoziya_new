@@ -161,4 +161,18 @@ LOGIN_REDIRECT_URL = '/dashboard/'
 LOGOUT_REDIRECT_URL = '/'
 
 # Tesseract OCR settings
-TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'  # Windows uchun
+TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
+
+# Google Cloud Vision API settings
+GOOGLE_API_KEY = 'AlzaSyA7hPlidsVobpDQPGxPXb46yvEQhIMDzOo'
+GOOGLE_PROJECT_ID = 'projects/980339613237'
+GOOGLE_PROJECT_NUMBER = '980339613237'
+
+# Google Gemini AI API settings
+GOOGLE_GEMINI_API_KEY = os.environ.get('GOOGLE_GEMINI_API_KEY', 'AIzaSyA7hPIidsVobpDQPGxPXb46yvEQhIMDzOo')
+
+# OpenRouter AI API settings (eski - o'chirilishi mumkin)
+OPENROUTER_API_KEY = 'sk-or-v1-1234567890abcdef'  # Bepul OpenRouter API key - haqiqiy key kerak
+OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
+OPENROUTER_SITE_URL = 'http://127.0.0.1:8000'
+OPENROUTER_SITE_NAME = 'Ustoziya Platformasi'  # Windows uchun

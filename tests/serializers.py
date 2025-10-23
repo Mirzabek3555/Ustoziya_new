@@ -93,7 +93,24 @@ class TestSerializer(serializers.ModelSerializer):
     
     def get_subject_display(self, obj):
         """Fan nomini qaytaradi"""
-        return obj.get_subject_display()
+        # Subject field mapping
+        subject_choices = {
+            'mathematics': 'Matematika',
+            'physics': 'Fizika',
+            'chemistry': 'Kimyo',
+            'biology': 'Biologiya',
+            'geography': 'Geografiya',
+            'history': 'Tarix',
+            'literature': 'Adabiyot',
+            'language': 'Til va adabiyot',
+            'english': 'Ingliz tili',
+            'russian': 'Rus tili',
+            'computer_science': 'Informatika',
+            'art': 'San\'at',
+            'physical_education': 'Jismoniy tarbiya',
+            'other': 'Boshqa'
+        }
+        return subject_choices.get(obj.subject, obj.subject)
     
     def get_difficulty_display(self, obj):
         """Qiyinlik darajasi nomini qaytaradi"""

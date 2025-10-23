@@ -15,6 +15,7 @@ from .serializers import (
     TestAttemptSerializer,
     StudentAnswerSerializer
 )
+from .ai_service import AITestGenerationService
 
 
 class TestCategoryListView(generics.ListAPIView):
@@ -77,6 +78,98 @@ class TestCreateView(generics.CreateAPIView):
     
     def perform_create(self, serializer):
         serializer.save(author=self.request.user)
+    
+    def create(self, request, *args, **kwargs):
+        """Test yaratish - AI funksiyasi bilan"""
+        # AI test generation parametrlarini tekshirish
+        ai_request = request.data.get('ai_generation')
+        
+        if ai_request:
+            # AI yordamida test yaratish
+            try:
+                subject = request.data.get('subject')
+                grade_level = request.data.get('grade_level')
+                difficulty = request.data.get('difficulty', 'medium')
+                num_questions = int(request.data.get('num_questions', 5))
+                category_id = request.data.get('category_id')
+                topic = request.data.get('topic', '')
+                
+                if not all([subject, grade_level]):
+                    return Response({
+                        'error': 'AI test yaratish uchun subject va grade_level majburiy'
+                    }, status=status.HTTP_400_BAD_REQUEST)
+                
+                # AI service'ni ishga tushirish
+                ai_service = AITestGenerationService()
+                
+                # AI yordamida savollar yaratish
+                questions_data = ai_service.generate_test_questions(
+                    subject=subject,
+                    grade_level=grade_level,
+                    difficulty=difficulty,
+                    num_questions=num_questions
+                )
+                
+                if not questions_data:
+                    return Response({
+                        'error': 'AI savollar yarata olmadi'
+                    }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+                
+                # Test sarlavhasi va tavsifini yaratish
+                test_title = ai_service.generate_test_title(subject, grade_level, difficulty, topic)
+                test_description = ai_service.generate_test_description(subject, grade_level, difficulty, len(questions_data))
+                
+                # Test yaratish
+                test = Test.objects.create(
+                    title=test_title,
+                    description=test_description,
+                    category_id=category_id,
+                    subject=subject,
+                    grade_level=grade_level,
+                    difficulty=difficulty,
+                    time_limit=len(questions_data) * 2,  # Har bir savol uchun 2 daqiqa
+                    author=request.user
+                )
+                
+                # Savollar va javoblarni yaratish
+                for i, question_data in enumerate(questions_data):
+                    question = Question.objects.create(
+                        test=test,
+                        question_text=question_data.get('question_text', ''),
+                        question_type=question_data.get('question_type', 'single_choice'),
+                        points=question_data.get('points', 1),
+                        order=i + 1,
+                        explanation=question_data.get('explanation', '')
+                    )
+                    
+                    # Javoblarni yaratish
+                    for j, answer_data in enumerate(question_data.get('answers', [])):
+                        Answer.objects.create(
+                            question=question,
+                            answer_text=answer_data.get('answer_text', ''),
+                            is_correct=answer_data.get('is_correct', False),
+                            order=j + 1
+                        )
+                
+                # Test statistikasini yangilash
+                test.total_questions = test.questions.count()
+                test.total_points = sum(q.points for q in test.questions.all())
+                test.save()
+                
+                return Response({
+                    'message': 'AI yordamida test muvaffaqiyatli yaratildi',
+                    'test': TestSerializer(test).data,
+                    'questions_count': len(questions_data)
+                })
+                
+            except Exception as e:
+                logger.error(f"AI test generation xatoligi: {e}")
+                return Response({
+                    'error': 'AI test yaratishda xatolik yuz berdi'
+                }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Oddiy test yaratish
+        return super().create(request, *args, **kwargs)
 
 
 class TestUpdateView(generics.UpdateAPIView):
@@ -383,3 +476,215 @@ def test_stats(request, pk):
         'avg_score': round(avg_score, 2),
         'avg_percentage': round(avg_percentage, 2)
     })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def generate_ai_test(request):
+    """AI yordamida test yaratish"""
+    try:
+        # Ma'lumotlarni olish
+        subject = request.data.get('subject')
+        grade_level = request.data.get('grade_level')
+        difficulty = request.data.get('difficulty', 'medium')
+        num_questions = int(request.data.get('num_questions', 5))
+        category_id = request.data.get('category_id')
+        topic = request.data.get('topic', '')
+        
+        if not all([subject, grade_level]):
+            return Response({
+                'error': 'Subject va grade_level majburiy'
+            }, status=status.HTTP_400_BAD_REQUEST)
+        
+        # AI service'ni ishga tushirish
+        ai_service = AITestGenerationService()
+        
+        # AI yordamida savollar yaratish
+        questions_data = ai_service.generate_test_questions(
+            subject=subject,
+            grade_level=grade_level,
+            difficulty=difficulty,
+            num_questions=num_questions
+        )
+        
+        if not questions_data:
+            return Response({
+                'error': 'AI savollar yarata olmadi'
+            }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        
+        # Test sarlavhasi va tavsifini yaratish
+        test_title = ai_service.generate_test_title(subject, grade_level, difficulty, topic)
+        test_description = ai_service.generate_test_description(subject, grade_level, difficulty, len(questions_data))
+        
+        # Test yaratish
+        test = Test.objects.create(
+            title=test_title,
+            description=test_description,
+            category_id=category_id,
+            subject=subject,
+            grade_level=grade_level,
+            difficulty=difficulty,
+            time_limit=len(questions_data) * 2,  # Har bir savol uchun 2 daqiqa
+            author=request.user
+        )
+        
+        # Savollar va javoblarni yaratish
+        for i, question_data in enumerate(questions_data):
+            question = Question.objects.create(
+                test=test,
+                question_text=question_data.get('question_text', ''),
+                question_type=question_data.get('question_type', 'single_choice'),
+                points=question_data.get('points', 1),
+                order=i + 1,
+                explanation=question_data.get('explanation', '')
+            )
+            
+            # Javoblarni yaratish
+            for j, answer_data in enumerate(question_data.get('answers', [])):
+                Answer.objects.create(
+                    question=question,
+                    answer_text=answer_data.get('answer_text', ''),
+                    is_correct=answer_data.get('is_correct', False),
+                    order=j + 1
+                )
+        
+        # Test statistikasini yangilash
+        test.total_questions = test.questions.count()
+        test.total_points = sum(q.points for q in test.questions.all())
+        test.save()
+        
+        return Response({
+            'message': 'AI yordamida test muvaffaqiyatli yaratildi',
+            'test': TestSerializer(test).data,
+            'questions_count': len(questions_data)
+        })
+        
+    except Exception as e:
+        logger.error(f"AI test generation xatoligi: {e}")
+        return Response({
+            'error': 'AI test yaratishda xatolik yuz berdi'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def export_test_to_word(request):
+    """Testni Word formatida export qilish"""
+    try:
+        from docx import Document
+        from docx.shared import Inches
+        from django.http import HttpResponse
+        import io
+        import logging
+        
+        logger = logging.getLogger(__name__)
+        
+        test_id = request.data.get('test_id')
+        if not test_id:
+            return Response({'error': 'Test ID kerak'}, status=status.HTTP_400_BAD_REQUEST)
+        
+        # Testni olish
+        test = Test.objects.get(id=test_id, author=request.user)
+        questions = test.questions.all().order_by('order')
+        
+        # Word hujjatini yaratish
+        doc = Document()
+        
+        # Sarlavha
+        title = doc.add_heading(test.title, 0)
+        title.alignment = 1  # Markazga tekislash
+        
+        # Subject mapping
+        subject_choices = {
+            'mathematics': 'Matematika',
+            'physics': 'Fizika',
+            'chemistry': 'Kimyo',
+            'biology': 'Biologiya',
+            'geography': 'Geografiya',
+            'history': 'Tarix',
+            'literature': 'Adabiyot',
+            'language': 'Til va adabiyot',
+            'english': 'Ingliz tili',
+            'russian': 'Rus tili',
+            'computer_science': 'Informatika',
+            'art': 'San\'at',
+            'physical_education': 'Jismoniy tarbiya',
+            'other': 'Boshqa'
+        }
+        
+        # Difficulty mapping
+        difficulty_choices = {
+            'easy': 'Oson',
+            'medium': 'O\'rta',
+            'hard': 'Qiyin'
+        }
+        
+        # Test ma'lumotlari
+        doc.add_paragraph(f"Fan: {subject_choices.get(test.subject, test.subject)}")
+        doc.add_paragraph(f"Sinf: {test.grade_level}")
+        doc.add_paragraph(f"Qiyinlik: {difficulty_choices.get(test.difficulty, test.difficulty)}")
+        doc.add_paragraph(f"Vaqt chegarasi: {test.time_limit} daqiqa")
+        doc.add_paragraph(f"Savollar soni: {questions.count()}")
+        
+        if test.description:
+            doc.add_paragraph(f"Tavsif: {test.description}")
+        
+        doc.add_paragraph()  # Bo'sh qator
+        
+        # Savollar
+        for i, question in enumerate(questions, 1):
+            # Savol matni
+            doc.add_heading(f"Savol {i}", level=2)
+            doc.add_paragraph(question.question_text)
+            
+            # Javoblar
+            answers = question.answers.all().order_by('order')
+            for j, answer in enumerate(answers):
+                letter = chr(65 + j)  # A, B, C, D
+                doc.add_paragraph(f"{letter}) {answer.answer_text}")
+            
+            # Tushuntirish
+            if question.explanation:
+                doc.add_paragraph(f"Tushuntirish: {question.explanation}")
+            
+            doc.add_paragraph()  # Bo'sh qator
+        
+        # Javoblar jadvali
+        doc.add_heading("Javoblar jadvali", level=1)
+        table = doc.add_table(rows=1, cols=2)
+        table.style = 'Table Grid'
+        
+        # Jadval sarlavhalari
+        hdr_cells = table.rows[0].cells
+        hdr_cells[0].text = 'Savol'
+        hdr_cells[1].text = 'To\'g\'ri javob'
+        
+        # Javoblar
+        for i, question in enumerate(questions, 1):
+            row_cells = table.add_row().cells
+            row_cells[0].text = str(i)
+            
+            # To'g'ri javobni topish
+            correct_answer = question.answers.filter(is_correct=True).first()
+            if correct_answer:
+                answer_order = correct_answer.order
+                row_cells[1].text = chr(64 + answer_order)  # A, B, C, D
+            else:
+                row_cells[1].text = "Javob yo'q"
+        
+        # Response yaratish
+        response = HttpResponse(
+            content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+        )
+        response['Content-Disposition'] = f'attachment; filename="{test.title}.docx"'
+        
+        # Hujjatni saqlash
+        doc.save(response)
+        
+        return response
+        
+    except Test.DoesNotExist:
+        return Response({'error': 'Test topilmadi'}, status=status.HTTP_404_NOT_FOUND)
+    except Exception as e:
+        logger.error(f"Word export xatoligi: {e}")
+        return Response({'error': 'Word export xatoligi'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

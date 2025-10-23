@@ -7,6 +7,9 @@ import json
 from django.conf import settings
 from .models import OCRProcessing, TestResult
 import logging
+from google.cloud import vision
+from google.oauth2 import service_account
+import io
 
 logger = logging.getLogger(__name__)
 
@@ -18,6 +21,16 @@ class OCRService:
         # Tesseract yo'lini sozlash (Windows uchun)
         if hasattr(settings, 'TESSERACT_PATH'):
             pytesseract.pytesseract.tesseract_cmd = settings.TESSERACT_PATH
+        
+        # Google Vision API'ni sozlash
+        try:
+            # API key orqali autentifikatsiya
+            import os
+            os.environ['GOOGLE_APPLICATION_CREDENTIALS'] = getattr(settings, 'GOOGLE_API_KEY', '')
+            self.vision_client = vision.ImageAnnotatorClient()
+        except Exception as e:
+            logger.warning(f"Google Vision API sozlanmadi: {e}")
+            self.vision_client = None
     
     def preprocess_image(self, image_path):
         """Rasmni oldindan qayta ishlash"""
@@ -46,6 +59,45 @@ class OCRService:
     def extract_text(self, image_path):
         """Rasmdan matnni ajratib olish"""
         try:
+            # Avval Google Vision API'ni sinab ko'rish
+            if self.vision_client:
+                text, confidence = self.extract_text_google(image_path)
+                if text and confidence > 0.7:  # Google Vision natijasi yaxshi bo'lsa
+                    return text, confidence
+            
+            # Google Vision ishlamasa yoki natija yomon bo'lsa, Tesseract ishlatish
+            return self.extract_text_tesseract(image_path)
+            
+        except Exception as e:
+            logger.error(f"OCR qilishda xatolik: {e}")
+            return None, 0.0
+    
+    def extract_text_google(self, image_path):
+        """Google Vision API orqali OCR"""
+        try:
+            with io.open(image_path, 'rb') as image_file:
+                content = image_file.read()
+            
+            image = vision.Image(content=content)
+            response = self.vision_client.text_detection(image=image)
+            texts = response.text_annotations
+            
+            if texts:
+                # Birinchi text - butun rasm matni
+                full_text = texts[0].description
+                # Ishonch darajasini hisoblash
+                confidence = 0.9  # Google Vision odatda yuqori ishonch darajasi
+                return full_text.strip(), confidence
+            
+            return None, 0.0
+            
+        except Exception as e:
+            logger.error(f"Google Vision OCR xatoligi: {e}")
+            return None, 0.0
+    
+    def extract_text_tesseract(self, image_path):
+        """Tesseract orqali OCR"""
+        try:
             # Rasmni qayta ishlash
             processed_image = self.preprocess_image(image_path)
             
@@ -64,7 +116,7 @@ class OCRService:
             return text.strip(), avg_confidence
             
         except Exception as e:
-            logger.error(f"OCR qilishda xatolik: {e}")
+            logger.error(f"Tesseract OCR xatoligi: {e}")
             return None, 0.0
     
     def parse_test_answers(self, text):

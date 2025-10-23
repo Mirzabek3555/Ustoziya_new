@@ -9,7 +9,7 @@ import os
 import logging
 
 from .models import OCRProcessing, TestResult, ExcelExport
-# from .services import OCRService, TestGradingService, ExcelExportService
+from .services import OCRService
 from tests.models import Test
 from .serializers import (
     OCRProcessingSerializer,
@@ -50,9 +50,9 @@ def upload_test_image(request):
                     'error': 'Test topilmadi'
                 }, status=status.HTTP_404_NOT_FOUND)
         
-        # OCR qilish (vaqtincha o'chirilgan)
-        text = "OCR xizmati hozircha ishlamaydi"
-        confidence = 0.0
+        # OCR qilish - Google Vision API va Tesseract
+        ocr_service = OCRService()
+        text, confidence = ocr_service.extract_text(ocr_processing.image.path)
         
         if text:
             ocr_processing.processed_text = text
