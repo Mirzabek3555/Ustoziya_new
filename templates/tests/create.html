@@ -1,0 +1,324 @@
+{% extends 'base.html' %}
+
+{% block title %}Yangi Test Yaratish - Ustoziya Platformasi{% endblock %}
+{% block page_title %}Yangi Test Yaratish{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-plus me-2"></i>
+                    Yangi Test Yaratish
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="post" id="testForm">
+                    {% csrf_token %}
+                    
+                    <!-- Test asosiy ma'lumotlari -->
+                    <div class="mb-4">
+                        <h6 class="text-primary mb-3">
+                            <i class="fas fa-info-circle me-2"></i>
+                            Test Asosiy Ma'lumotlari
+                        </h6>
+                        
+                        <div class="row">
+                            <div class="col-md-8 mb-3">
+                                <label for="title" class="form-label">Test Sarlavhasi *</label>
+                                <input type="text" class="form-control" id="title" name="title" required>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label for="subject" class="form-label">Fan *</label>
+                                <select class="form-select" id="subject" name="subject" required>
+                                    <option value="">Fan tanlang...</option>
+                                    <option value="mathematics">Matematika</option>
+                                    <option value="physics">Fizika</option>
+                                    <option value="chemistry">Kimyo</option>
+                                    <option value="biology">Biologiya</option>
+                                    <option value="geography">Geografiya</option>
+                                    <option value="history">Tarix</option>
+                                    <option value="literature">Adabiyot</option>
+                                    <option value="language">Til va adabiyot</option>
+                                    <option value="english">Ingliz tili</option>
+                                    <option value="russian">Rus tili</option>
+                                    <option value="computer_science">Informatika</option>
+                                    <option value="art">San'at</option>
+                                    <option value="physical_education">Jismoniy tarbiya</option>
+                                    <option value="other">Boshqa</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="grade_level" class="form-label">Sinf Darajasi *</label>
+                                <input type="text" class="form-control" id="grade_level" name="grade_level" placeholder="Masalan: 5-sinf, 9-sinf" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="difficulty" class="form-label">Qiyinlik Darajasi *</label>
+                                <select class="form-select" id="difficulty" name="difficulty" required>
+                                    <option value="easy">Oson</option>
+                                    <option value="medium" selected>O'rta</option>
+                                    <option value="hard">Qiyin</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="description" class="form-label">Test Tavsifi</label>
+                            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Test haqida qisqacha ma'lumot..."></textarea>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="time_limit" class="form-label">Vaqt Chegarasi (daqiqa) *</label>
+                                <input type="number" class="form-control" id="time_limit" name="time_limit" value="60" min="1" required>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="is_public" class="form-label">Holat</label>
+                                <select class="form-select" id="is_public" name="is_public">
+                                    <option value="true" selected>Umumiy foydalanish</option>
+                                    <option value="false">Shaxsiy</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Savollar qo'shish -->
+                    <div class="mb-4">
+                        <h6 class="text-success mb-3">
+                            <i class="fas fa-question-circle me-2"></i>
+                            Test Savollari
+                        </h6>
+                        
+                        <div id="questionsContainer">
+                            <!-- Savollar bu yerda ko'rsatiladi -->
+                        </div>
+                        
+                        <button type="button" class="btn btn-outline-success" id="addQuestionBtn">
+                            <i class="fas fa-plus me-2"></i>
+                            Savol Qo'shish
+                        </button>
+                    </div>
+                    
+                    <!-- Saqlash tugmasi -->
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg">
+                            <i class="fas fa-save me-2"></i>
+                            Test Yaratish
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Savol template -->
+<template id="questionTemplate">
+    <div class="question-item card mb-3" data-question-index="0">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h6 class="mb-0">Savol <span class="question-number">1</span></h6>
+            <button type="button" class="btn btn-sm btn-outline-danger remove-question">
+                <i class="fas fa-trash"></i>
+            </button>
+        </div>
+        <div class="card-body">
+            <div class="mb-3">
+                <label class="form-label">Savol Matni *</label>
+                <textarea class="form-control question-text" name="questions[0][text]" rows="3" required></textarea>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Savol Turi *</label>
+                <select class="form-select question-type" name="questions[0][type]" required>
+                    <option value="single_choice">Bitta javob tanlash</option>
+                    <option value="multiple_choice">Bir nechta javob tanlash</option>
+                    <option value="true_false">To'g'ri/Noto'g'ri</option>
+                    <option value="fill_blank">Bo'sh joyni to'ldirish</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Ball *</label>
+                <input type="number" class="form-control question-points" name="questions[0][points]" value="1" min="1" required>
+            </div>
+            
+            <div class="mb-3">
+                <label class="form-label">Tushuntirish</label>
+                <textarea class="form-control question-explanation" name="questions[0][explanation]" rows="2"></textarea>
+            </div>
+            
+            <!-- Javoblar -->
+            <div class="answers-container">
+                <label class="form-label">Javoblar *</label>
+                <div class="answers-list">
+                    <!-- Javoblar bu yerda ko'rsatiladi -->
+                </div>
+                <button type="button" class="btn btn-sm btn-outline-primary add-answer">
+                    <i class="fas fa-plus me-1"></i>
+                    Javob Qo'shish
+                </button>
+            </div>
+        </div>
+    </div>
+</template>
+
+<!-- Javob template -->
+<template id="answerTemplate">
+    <div class="answer-item d-flex align-items-center mb-2">
+        <div class="form-check me-2">
+            <input class="form-check-input answer-correct" type="checkbox" name="questions[0][answers][0][is_correct]">
+        </div>
+        <input type="text" class="form-control answer-text" name="questions[0][answers][0][text]" placeholder="Javob matni..." required>
+        <button type="button" class="btn btn-sm btn-outline-danger ms-2 remove-answer">
+            <i class="fas fa-trash"></i>
+        </button>
+    </div>
+</template>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let questionIndex = 0;
+    const questionsContainer = document.getElementById('questionsContainer');
+    const addQuestionBtn = document.getElementById('addQuestionBtn');
+    const questionTemplate = document.getElementById('questionTemplate');
+    const answerTemplate = document.getElementById('answerTemplate');
+    
+    // Savol qo'shish
+    addQuestionBtn.addEventListener('click', function() {
+        addQuestion();
+    });
+    
+    function addQuestion() {
+        const questionElement = questionTemplate.content.cloneNode(true);
+        const questionItem = questionElement.querySelector('.question-item');
+        const questionNumber = questionElement.querySelector('.question-number');
+        
+        questionItem.setAttribute('data-question-index', questionIndex);
+        questionItem.querySelectorAll('input, select, textarea').forEach(input => {
+            const name = input.getAttribute('name');
+            if (name) {
+                input.setAttribute('name', name.replace('[0]', `[${questionIndex}]`));
+            }
+        });
+        
+        questionNumber.textContent = questionIndex + 1;
+        
+        // Savol o'chirish
+        questionElement.querySelector('.remove-question').addEventListener('click', function() {
+            questionItem.remove();
+            updateQuestionNumbers();
+        });
+        
+        // Javob qo'shish
+        questionElement.querySelector('.add-answer').addEventListener('click', function() {
+            addAnswer(questionElement.querySelector('.answers-list'), questionIndex);
+        });
+        
+        questionsContainer.appendChild(questionElement);
+        questionIndex++;
+        
+        // Birinchi javobni qo'shish
+        addAnswer(questionElement.querySelector('.answers-list'), questionIndex - 1);
+    }
+    
+    function addAnswer(answersList, qIndex) {
+        const answerElement = answerTemplate.content.cloneNode(true);
+        const answerItem = answerElement.querySelector('.answer-item');
+        
+        answerItem.querySelectorAll('input').forEach(input => {
+            const name = input.getAttribute('name');
+            if (name) {
+                input.setAttribute('name', name.replace('[0]', `[${qIndex}]`).replace('[0]', `[${answersList.children.length}]`));
+            }
+        });
+        
+        // Javob o'chirish
+        answerElement.querySelector('.remove-answer').addEventListener('click', function() {
+            answerItem.remove();
+        });
+        
+        answersList.appendChild(answerElement);
+    }
+    
+    function updateQuestionNumbers() {
+        const questions = questionsContainer.querySelectorAll('.question-item');
+        questions.forEach((question, index) => {
+            question.querySelector('.question-number').textContent = index + 1;
+            question.setAttribute('data-question-index', index);
+            
+            // Input nomlarini yangilash
+            question.querySelectorAll('input, select, textarea').forEach(input => {
+                const name = input.getAttribute('name');
+                if (name) {
+                    const newName = name.replace(/questions\[\d+\]/, `questions[${index}]`);
+                    input.setAttribute('name', newName);
+                }
+            });
+        });
+    }
+    
+    // Form yuborish
+    document.getElementById('testForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const questions = [];
+        
+        // Savollarni to'plash
+        const questionItems = questionsContainer.querySelectorAll('.question-item');
+        questionItems.forEach((item, index) => {
+            const question = {
+                text: item.querySelector('.question-text').value,
+                type: item.querySelector('.question-type').value,
+                points: parseInt(item.querySelector('.question-points').value),
+                explanation: item.querySelector('.question-explanation').value,
+                answers: []
+            };
+            
+            // Javoblarni to'plash
+            const answerItems = item.querySelectorAll('.answer-item');
+            answerItems.forEach(answerItem => {
+                const answer = {
+                    text: answerItem.querySelector('.answer-text').value,
+                    is_correct: answerItem.querySelector('.answer-correct').checked
+                };
+                question.answers.push(answer);
+            });
+            
+            questions.push(question);
+        });
+        
+        // AJAX orqali yuborish
+        fetch('{% url "tests:test_create" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Test muvaffaqiyatli yaratildi!');
+                window.location.href = '{% url "tests_list" %}';
+            } else {
+                alert('Xatolik: ' + (data.error || 'Noma\'lum xatolik'));
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Server xatoligi yuz berdi');
+        });
+    });
+    
+    // Birinchi savolni qo'shish
+    addQuestion();
+});
+</script>
+{% endblock %}

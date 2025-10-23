@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+
+{% block title %}Testlar - Ustoziya Platformasi{% endblock %}
+{% block page_title %}Testlar{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-question-circle me-2"></i>
+                    Barcha Testlar
+                </h5>
+                <a href="{% url 'test_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Yangi Test
+                </a>
+            </div>
+            <div class="card-body">
+                {% if tests %}
+                    <div class="row">
+                        {% for test in tests %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ test.title }}</h6>
+                                    <p class="card-text text-muted">{{ test.description|truncatewords:20 }}</p>
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="badge bg-success">{{ test.get_difficulty_display }}</span>
+                                        <small class="text-muted">{{ test.total_questions }} savol</small>
+                                    </div>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-info">{{ test.get_subject_display }}</span>
+                                        <small class="text-muted">{{ test.time_limit }} daqiqa</small>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">{{ test.author.get_full_name }}</small>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Hozircha testlar yo'q</h5>
+                        <p class="text-muted">Birinchi testni yarating</p>
+                        <a href="{% url 'test_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            Yangi Test
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

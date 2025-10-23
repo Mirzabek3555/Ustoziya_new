@@ -1,0 +1,59 @@
+{% extends 'base.html' %}
+
+{% block title %}Materiallar - Ustoziya Platformasi{% endblock %}
+{% block page_title %}Materiallar{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Barcha Materiallar
+                </h5>
+                <a href="{% url 'material_create' %}" class="btn btn-primary">
+                    <i class="fas fa-plus me-2"></i>
+                    Yangi Material
+                </a>
+            </div>
+            <div class="card-body">
+                {% if materials %}
+                    <div class="row">
+                        {% for material in materials %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100">
+                                <div class="card-body">
+                                    <h6 class="card-title">{{ material.title }}</h6>
+                                    <p class="card-text text-muted">{{ material.description|truncatewords:20 }}</p>
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <span class="badge bg-primary">{{ material.get_material_type_display }}</span>
+                                        <small class="text-muted">{{ material.download_count }} yuklab olish</small>
+                                    </div>
+                                </div>
+                                <div class="card-footer">
+                                    <div class="d-flex justify-content-between">
+                                        <small class="text-muted">{{ material.author.get_full_name }}</small>
+                                        <a href="#" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-file-alt fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Hozircha materiallar yo'q</h5>
+                        <p class="text-muted">Birinchi materialni qo'shing</p>
+                        <a href="{% url 'material_create' %}" class="btn btn-primary">
+                            <i class="fas fa-plus me-2"></i>
+                            Yangi Material
+                        </a>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
