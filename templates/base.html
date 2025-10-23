@@ -172,10 +172,71 @@
                             <i class="fas fa-tachometer-alt me-2"></i>
                             Dashboard
                         </a>
-                        <a class="nav-link {% if 'materials' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'materials_list' %}">
-                            <i class="fas fa-file-alt me-2"></i>
-                            Materiallar
-                        </a>
+                        
+                        <!-- Materiallar bo'limi -->
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-file-alt me-2"></i>
+                                Materiallar
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="{% url 'materials_list' %}">
+                                    <i class="fas fa-file-alt me-2"></i>Barcha materiallar
+                                </a></li>
+                                <li><a class="dropdown-item" href="{% url 'material_create' %}">
+                                    <i class="fas fa-plus me-2"></i>Yangi material
+                                </a></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Topshiriqlar bo'limi -->
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-tasks me-2"></i>
+                                Topshiriqlar
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/assignments/">
+                                    <i class="fas fa-list me-2"></i>Barcha topshiriqlar
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showCreateAssignmentModal()">
+                                    <i class="fas fa-plus me-2"></i>Topshiriq berish
+                                </a></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Video darsliklar -->
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-video me-2"></i>
+                                Video Darsliklar
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/videos/">
+                                    <i class="fas fa-list me-2"></i>Barcha videolar
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showCreateVideoModal()">
+                                    <i class="fas fa-plus me-2"></i>Yangi video
+                                </a></li>
+                            </ul>
+                        </div>
+                        
+                        <!-- 3D Modellar -->
+                        <div class="dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" role="button" data-bs-toggle="dropdown">
+                                <i class="fas fa-cube me-2"></i>
+                                3D Modellar
+                            </a>
+                            <ul class="dropdown-menu">
+                                <li><a class="dropdown-item" href="/3d-models/">
+                                    <i class="fas fa-list me-2"></i>Barcha modellar
+                                </a></li>
+                                <li><a class="dropdown-item" href="#" onclick="showCreate3DModelModal()">
+                                    <i class="fas fa-plus me-2"></i>Yangi model
+                                </a></li>
+                            </ul>
+                        </div>
+                        
                         <a class="nav-link {% if 'tests' in request.resolver_match.url_name %}active{% endif %}" href="{% url 'tests_list' %}">
                             <i class="fas fa-question-circle me-2"></i>
                             Testlar

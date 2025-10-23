@@ -5,13 +5,21 @@ from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
 from django.http import HttpResponse, Http404
 from django.db.models import Q
+from django.utils import timezone
 import os
 
-from .models import Material, MaterialCategory, MaterialRating, MaterialDownload
+from .models import (
+    Material, MaterialCategory, MaterialRating, MaterialDownload,
+    Assignment, StudentSubmission, VideoLesson, Model3D
+)
 from .serializers import (
     MaterialCategorySerializer,
     MaterialSerializer,
-    MaterialRatingSerializer
+    MaterialRatingSerializer,
+    AssignmentSerializer,
+    StudentSubmissionSerializer,
+    VideoLessonSerializer,
+    Model3DSerializer
 )
 
 
@@ -240,3 +248,249 @@ def material_stats(request):
         'avg_rating': round(avg_rating, 2),
         'popular_materials': MaterialSerializer(popular_materials, many=True).data
     })
+
+
+# ============ ASSIGNMENT VIEWS ============
+
+class AssignmentListView(generics.ListCreateAPIView):
+    """Topshiriqlar ro'yxati va yaratish"""
+    serializer_class = AssignmentSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = Assignment.objects.filter(is_active=True)
+        
+        # Filtrlash
+        category = self.request.query_params.get('category')
+        assignment_type = self.request.query_params.get('type')
+        subject = self.request.query_params.get('subject')
+        grade_level = self.request.query_params.get('grade')
+        teacher = self.request.query_params.get('teacher')
+        
+        if category:
+            queryset = queryset.filter(category_id=category)
+        if assignment_type:
+            queryset = queryset.filter(assignment_type=assignment_type)
+        if subject:
+            queryset = queryset.filter(subject=subject)
+        if grade_level:
+            queryset = queryset.filter(grade_level=grade_level)
+        if teacher:
+            queryset = queryset.filter(teacher_id=teacher)
+        
+        return queryset.order_by('-created_at')
+    
+    def perform_create(self, serializer):
+        serializer.save(teacher=self.request.user)
+
+
+class AssignmentDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Topshiriq tafsilotlari"""
+    serializer_class = AssignmentSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Assignment.objects.filter(
+            Q(is_active=True) | Q(teacher=self.request.user)
+        )
+
+
+class StudentSubmissionListView(generics.ListCreateAPIView):
+    """O'quvchi topshirig'lari ro'yxati"""
+    serializer_class = StudentSubmissionSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        assignment_id = self.request.query_params.get('assignment')
+        if assignment_id:
+            return StudentSubmission.objects.filter(assignment_id=assignment_id)
+        return StudentSubmission.objects.none()
+    
+    def perform_create(self, serializer):
+        serializer.save()
+
+
+class StudentSubmissionDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """O'quvchi topshirig'i tafsilotlari"""
+    serializer_class = StudentSubmissionSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return StudentSubmission.objects.all()
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def grade_submission(request, pk):
+    """O'quvchi ishini baholash"""
+    submission = get_object_or_404(StudentSubmission, pk=pk)
+    
+    grade = request.data.get('grade')
+    feedback = request.data.get('feedback', '')
+    
+    if not grade or not (0 <= int(grade) <= submission.assignment.max_points):
+        return Response({
+            'error': f'Ball 0 dan {submission.assignment.max_points} gacha bo\'lishi kerak'
+        }, status=status.HTTP_400_BAD_REQUEST)
+    
+    submission.grade = grade
+    submission.feedback = feedback
+    submission.status = 'graded'
+    submission.graded_by = request.user
+    submission.graded_at = timezone.now()
+    submission.save()
+    
+    return Response({
+        'message': 'Ish muvaffaqiyatli baholandi',
+        'submission': StudentSubmissionSerializer(submission).data
+    })
+
+
+# ============ VIDEO LESSON VIEWS ============
+
+class VideoLessonListView(generics.ListCreateAPIView):
+    """Video darsliklar ro'yxati"""
+    serializer_class = VideoLessonSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = VideoLesson.objects.filter(is_public=True)
+        
+        # Filtrlash
+        category = self.request.query_params.get('category')
+        subject = self.request.query_params.get('subject')
+        grade_level = self.request.query_params.get('grade')
+        search = self.request.query_params.get('search')
+        
+        if category:
+            queryset = queryset.filter(category_id=category)
+        if subject:
+            queryset = queryset.filter(subject=subject)
+        if grade_level:
+            queryset = queryset.filter(grade_level=grade_level)
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search) |
+                Q(tags__icontains=search)
+            )
+        
+        return queryset.order_by('-created_at')
+    
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+
+class VideoLessonDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """Video darslik tafsilotlari"""
+    serializer_class = VideoLessonSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return VideoLesson.objects.filter(
+            Q(is_public=True) | Q(author=self.request.user)
+        )
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def watch_video(request, pk):
+    """Video ko'rish statistikasini yangilash"""
+    video = get_object_or_404(VideoLesson, pk=pk)
+    
+    if not video.is_public and video.author != request.user:
+        return Response({
+            'error': 'Bu videoni ko\'rish huquqingiz yo\'q'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    video.view_count += 1
+    video.save()
+    
+    return Response({
+        'message': 'Video ko\'rish statistikasi yangilandi',
+        'view_count': video.view_count
+    })
+
+
+# ============ 3D MODEL VIEWS ============
+
+class Model3DListView(generics.ListCreateAPIView):
+    """3D modellar ro'yxati"""
+    serializer_class = Model3DSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        queryset = Model3D.objects.filter(is_public=True)
+        
+        # Filtrlash
+        category = self.request.query_params.get('category')
+        model_type = self.request.query_params.get('type')
+        subject = self.request.query_params.get('subject')
+        grade_level = self.request.query_params.get('grade')
+        is_interactive = self.request.query_params.get('interactive')
+        search = self.request.query_params.get('search')
+        
+        if category:
+            queryset = queryset.filter(category_id=category)
+        if model_type:
+            queryset = queryset.filter(model_type=model_type)
+        if subject:
+            queryset = queryset.filter(subject=subject)
+        if grade_level:
+            queryset = queryset.filter(grade_level=grade_level)
+        if is_interactive:
+            queryset = queryset.filter(is_interactive=True)
+        if search:
+            queryset = queryset.filter(
+                Q(title__icontains=search) |
+                Q(description__icontains=search)
+            )
+        
+        return queryset.order_by('-created_at')
+    
+    def perform_create(self, serializer):
+        serializer.save(author=self.request.user)
+
+
+class Model3DDetailView(generics.RetrieveUpdateDestroyAPIView):
+    """3D model tafsilotlari"""
+    serializer_class = Model3DSerializer
+    permission_classes = [IsAuthenticated]
+    
+    def get_queryset(self):
+        return Model3D.objects.filter(
+            Q(is_public=True) | Q(author=self.request.user)
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def download_3d_model(request, pk):
+    """3D modelni yuklab olish"""
+    model = get_object_or_404(Model3D, pk=pk)
+    
+    if not model.is_public and model.author != request.user:
+        return Response({
+            'error': 'Bu modelni yuklab olish huquqingiz yo\'q'
+        }, status=status.HTTP_403_FORBIDDEN)
+    
+    try:
+        # Yuklab olish statistikasini yangilash
+        model.download_count += 1
+        model.save()
+        
+        # Faylni yuklab olish
+        if os.path.exists(model.model_file.path):
+            with open(model.model_file.path, 'rb') as f:
+                response = HttpResponse(f.read(), content_type='application/octet-stream')
+                response['Content-Disposition'] = f'attachment; filename="{model.title}.{model.model_file.name.split(".")[-1]}"'
+                return response
+        else:
+            return Response({
+                'error': 'Fayl topilmadi'
+            }, status=status.HTTP_404_NOT_FOUND)
+            
+    except Exception as e:
+        return Response({
+            'error': 'Faylni yuklab olishda xatolik'
+        }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

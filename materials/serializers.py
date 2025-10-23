@@ -1,5 +1,8 @@
 from rest_framework import serializers
-from .models import Material, MaterialCategory, MaterialRating, MaterialDownload
+from .models import (
+    Material, MaterialCategory, MaterialRating, MaterialDownload,
+    Assignment, StudentSubmission, VideoLesson, Model3D
+)
 
 
 class MaterialCategorySerializer(serializers.ModelSerializer):
@@ -145,3 +148,163 @@ class MaterialCreateSerializer(serializers.ModelSerializer):
             tags = [tag.strip() for tag in value.split(',') if tag.strip()]
             return ', '.join(tags)
         return value
+
+
+class AssignmentSerializer(serializers.ModelSerializer):
+    """Topshiriq serializeri"""
+    
+    teacher_name = serializers.SerializerMethodField()
+    category_name = serializers.SerializerMethodField()
+    assignment_type_display = serializers.SerializerMethodField()
+    submissions_count = serializers.SerializerMethodField()
+    materials_list = MaterialSerializer(source='materials', many=True, read_only=True)
+    
+    class Meta:
+        model = Assignment
+        fields = [
+            'id', 'title', 'description', 'assignment_type', 'assignment_type_display',
+            'teacher', 'teacher_name', 'category', 'category_name', 'grade_level',
+            'subject', 'due_date', 'max_points', 'materials', 'materials_list',
+            'instructions', 'is_active', 'submissions_count', 'created_at', 'updated_at'
+        ]
+        read_only_fields = ['id', 'teacher', 'created_at', 'updated_at']
+    
+    def get_teacher_name(self, obj):
+        return obj.teacher.get_full_name()
+    
+    def get_category_name(self, obj):
+        return obj.category.name if obj.category else None
+    
+    def get_assignment_type_display(self, obj):
+        return obj.get_assignment_type_display()
+    
+    def get_submissions_count(self, obj):
+        return obj.submissions.count()
+
+
+class StudentSubmissionSerializer(serializers.ModelSerializer):
+    """O'quvchi topshirig'i serializeri"""
+    
+    assignment_title = serializers.SerializerMethodField()
+    graded_by_name = serializers.SerializerMethodField()
+    status_display = serializers.SerializerMethodField()
+    attached_files_list = MaterialSerializer(source='attached_files', many=True, read_only=True)
+    
+    class Meta:
+        model = StudentSubmission
+        fields = [
+            'id', 'assignment', 'assignment_title', 'student_name', 'student_class',
+            'student_email', 'submission_text', 'attached_files', 'attached_files_list',
+            'status', 'status_display', 'submitted_at', 'grade', 'feedback',
+            'graded_at', 'graded_by', 'graded_by_name', 'created_at'
+        ]
+        read_only_fields = ['id', 'submitted_at', 'graded_at', 'graded_by', 'created_at']
+    
+    def get_assignment_title(self, obj):
+        return obj.assignment.title
+    
+    def get_graded_by_name(self, obj):
+        return obj.graded_by.get_full_name() if obj.graded_by else None
+    
+    def get_status_display(self, obj):
+        return obj.get_status_display()
+
+
+class VideoLessonSerializer(serializers.ModelSerializer):
+    """Video darslik serializeri"""
+    
+    author_name = serializers.SerializerMethodField()
+    category_name = serializers.SerializerMethodField()
+    video_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
+    tags_list = serializers.SerializerMethodField()
+    duration_formatted = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = VideoLesson
+        fields = [
+            'id', 'title', 'description', 'video_file', 'video_url', 'thumbnail',
+            'thumbnail_url', 'duration', 'duration_formatted', 'category',
+            'category_name', 'author', 'author_name', 'grade_level', 'subject',
+            'tags', 'tags_list', 'is_public', 'view_count', 'rating', 'created_at'
+        ]
+        read_only_fields = ['id', 'author', 'view_count', 'rating', 'created_at']
+    
+    def get_author_name(self, obj):
+        return obj.author.get_full_name()
+    
+    def get_category_name(self, obj):
+        return obj.category.name if obj.category else None
+    
+    def get_video_url(self, obj):
+        if obj.video_file:
+            return obj.video_file.url
+        return None
+    
+    def get_thumbnail_url(self, obj):
+        if obj.thumbnail:
+            return obj.thumbnail.url
+        return None
+    
+    def get_tags_list(self, obj):
+        if obj.tags:
+            return [tag.strip() for tag in obj.tags.split(',')]
+        return []
+    
+    def get_duration_formatted(self, obj):
+        minutes = obj.duration // 60
+        seconds = obj.duration % 60
+        return f"{minutes:02d}:{seconds:02d}"
+
+
+class Model3DSerializer(serializers.ModelSerializer):
+    """3D model serializeri"""
+    
+    author_name = serializers.SerializerMethodField()
+    category_name = serializers.SerializerMethodField()
+    model_type_display = serializers.SerializerMethodField()
+    model_url = serializers.SerializerMethodField()
+    thumbnail_url = serializers.SerializerMethodField()
+    file_size_formatted = serializers.SerializerMethodField()
+    
+    class Meta:
+        model = Model3D
+        fields = [
+            'id', 'title', 'description', 'model_file', 'model_url', 'thumbnail',
+            'thumbnail_url', 'model_type', 'model_type_display', 'category',
+            'category_name', 'author', 'author_name', 'grade_level', 'subject',
+            'file_size', 'file_size_formatted', 'is_interactive', 'is_public',
+            'download_count', 'rating', 'created_at'
+        ]
+        read_only_fields = ['id', 'author', 'download_count', 'rating', 'created_at']
+    
+    def get_author_name(self, obj):
+        return obj.author.get_full_name()
+    
+    def get_category_name(self, obj):
+        return obj.category.name if obj.category else None
+    
+    def get_model_type_display(self, obj):
+        return obj.get_model_type_display()
+    
+    def get_model_url(self, obj):
+        if obj.model_file:
+            return obj.model_file.url
+        return None
+    
+    def get_thumbnail_url(self, obj):
+        if obj.thumbnail:
+            return obj.thumbnail.url
+        return None
+    
+    def get_file_size_formatted(self, obj):
+        """Fayl hajmini formatlash"""
+        size = obj.file_size
+        if size < 1024:
+            return f"{size} B"
+        elif size < 1024 * 1024:
+            return f"{size / 1024:.1f} KB"
+        elif size < 1024 * 1024 * 1024:
+            return f"{size / (1024 * 1024):.1f} MB"
+        else:
+            return f"{size / (1024 * 1024 * 1024):.1f} GB"
