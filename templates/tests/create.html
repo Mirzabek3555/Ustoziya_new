@@ -155,7 +155,7 @@ document.addEventListener('DOMContentLoaded', function() {
             time_limit: parseInt(timeLimit)
         };
         
-        fetch('{% url "generate_ai_test" %}', {
+        fetch('/api/tests/generate-ai/', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

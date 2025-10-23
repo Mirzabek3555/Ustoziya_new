@@ -6,7 +6,7 @@
 {% block content %}
 <div class="row">
     <!-- Stats Cards -->
-    <div class="col-md-3 mb-4">
+    <div class="col-md-2 mb-4">
         <div class="stats-card">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -18,7 +18,7 @@
         </div>
     </div>
     
-    <div class="col-md-3 mb-4">
+    <div class="col-md-2 mb-4">
         <div class="stats-card" style="background: linear-gradient(135deg, #3498db, #2980b9);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
@@ -30,26 +30,50 @@
         </div>
     </div>
     
-    <div class="col-md-3 mb-4">
+    <div class="col-md-2 mb-4">
         <div class="stats-card" style="background: linear-gradient(135deg, #e74c3c, #c0392b);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h3>{{ stats.ocr_count|default:0 }}</h3>
-                    <p class="mb-0">OCR Tekshirish</p>
+                    <h3>{{ stats.assignments_count|default:0 }}</h3>
+                    <p class="mb-0">Topshiriqlar</p>
                 </div>
-                <i class="fas fa-camera fa-2x"></i>
+                <i class="fas fa-tasks fa-2x"></i>
             </div>
         </div>
     </div>
     
-    <div class="col-md-3 mb-4">
+    <div class="col-md-2 mb-4">
         <div class="stats-card" style="background: linear-gradient(135deg, #f39c12, #e67e22);">
             <div class="d-flex justify-content-between align-items-center">
                 <div>
-                    <h3>{{ stats.excel_count|default:0 }}</h3>
-                    <p class="mb-0">Excel Eksport</p>
+                    <h3>{{ stats.videos_count|default:0 }}</h3>
+                    <p class="mb-0">Video Darsliklar</p>
                 </div>
-                <i class="fas fa-file-excel fa-2x"></i>
+                <i class="fas fa-video fa-2x"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 mb-4">
+        <div class="stats-card" style="background: linear-gradient(135deg, #9b59b6, #8e44ad);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3>{{ stats.models_3d_count|default:0 }}</h3>
+                    <p class="mb-0">3D Modellar</p>
+                </div>
+                <i class="fas fa-cube fa-2x"></i>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-2 mb-4">
+        <div class="stats-card" style="background: linear-gradient(135deg, #1abc9c, #16a085);">
+            <div class="d-flex justify-content-between align-items-center">
+                <div>
+                    <h3>{{ stats.ocr_count|default:0 }}</h3>
+                    <p class="mb-0">OCR</p>
+                </div>
+                <i class="fas fa-camera fa-2x"></i>
             </div>
         </div>
     </div>
@@ -67,28 +91,40 @@
             </div>
             <div class="card-body">
                 <div class="row">
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <a href="{% url 'material_create' %}" class="btn btn-primary w-100">
                             <i class="fas fa-plus me-2"></i>
                             Yangi Material
                         </a>
                     </div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
                         <a href="{% url 'test_create' %}" class="btn btn-success w-100">
                             <i class="fas fa-plus me-2"></i>
                             Yangi Test
                         </a>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <a href="{% url 'ocr_upload' %}" class="btn btn-warning w-100">
-                            <i class="fas fa-camera me-2"></i>
-                            OCR Tekshirish
+                    <div class="col-md-4 mb-3">
+                        <a href="{% url 'assignments_list' %}" class="btn btn-warning w-100">
+                            <i class="fas fa-tasks me-2"></i>
+                            Topshiriq Berish
                         </a>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <a href="{% url 'materials_list' %}" class="btn btn-info w-100">
-                            <i class="fas fa-search me-2"></i>
-                            Qidirish
+                    <div class="col-md-4 mb-3">
+                        <a href="{% url 'videos_list' %}" class="btn btn-info w-100">
+                            <i class="fas fa-video me-2"></i>
+                            Video Darslik
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="{% url 'models_3d_list' %}" class="btn btn-secondary w-100">
+                            <i class="fas fa-cube me-2"></i>
+                            3D Model
+                        </a>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <a href="{% url 'ocr_upload' %}" class="btn btn-dark w-100">
+                            <i class="fas fa-camera me-2"></i>
+                            OCR Tekshirish
                         </a>
                     </div>
                 </div>

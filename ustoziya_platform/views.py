@@ -7,7 +7,7 @@ from django.views.decorators.csrf import csrf_exempt
 import json
 
 from accounts.models import User
-from materials.models import Material
+from materials.models import Material, Assignment, VideoLesson, Model3D
 from tests.models import Test
 from ocr_processing.models import OCRProcessing
 
@@ -38,6 +38,9 @@ def dashboard(request):
     # Statistikalar
     materials_count = Material.objects.filter(author=user).count()
     tests_count = Test.objects.filter(author=user).count()
+    assignments_count = Assignment.objects.filter(teacher=user).count()
+    videos_count = VideoLesson.objects.filter(author=user).count()
+    models_3d_count = Model3D.objects.filter(author=user).count()
     ocr_count = OCRProcessing.objects.filter(user=user).count()
     
     # So'nggi materiallar
@@ -50,8 +53,10 @@ def dashboard(request):
         'stats': {
             'materials_count': materials_count,
             'tests_count': tests_count,
+            'assignments_count': assignments_count,
+            'videos_count': videos_count,
+            'models_3d_count': models_3d_count,
             'ocr_count': ocr_count,
-            'excel_count': 0,  # Hozircha
         },
         'recent_materials': recent_materials,
         'recent_tests': recent_tests,
@@ -322,3 +327,21 @@ def ocr_upload(request):
         'tests': tests,
     }
     return render(request, 'ocr_upload.html', context)
+
+
+@login_required
+def assignments_list(request):
+    """Topshiriqlar ro'yxati"""
+    return render(request, 'assignments/list.html')
+
+
+@login_required
+def videos_list(request):
+    """Video darsliklar ro'yxati"""
+    return render(request, 'videos/list.html')
+
+
+@login_required
+def models_3d_list(request):
+    """3D modellar ro'yxati"""
+    return render(request, '3d_models/list.html')
