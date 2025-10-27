@@ -223,6 +223,22 @@ document.addEventListener('DOMContentLoaded', function() {
         
         window.location.href = `/tests/${generatedTest.id}/`;
     });
+    
+    // Test natijalarini ko'rish tugmasini qo'shish
+    if (generatedTest) {
+        const viewResultsBtn = document.createElement('button');
+        viewResultsBtn.type = 'button';
+        viewResultsBtn.className = 'btn btn-info me-2';
+        viewResultsBtn.innerHTML = '<i class="fas fa-chart-bar me-2"></i>Natijalarni ko\'rish';
+        viewResultsBtn.onclick = function() {
+            window.location.href = `/tests/${generatedTest.id}/results/`;
+        };
+        
+        const buttonContainer = document.querySelector('#testResult .mt-3');
+        if (buttonContainer) {
+            buttonContainer.insertBefore(viewResultsBtn, buttonContainer.firstChild);
+        }
+    }
 });
 </script>
 {% endblock %}

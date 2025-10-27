@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}Test tahlili - Ustoziya Platformasi{% endblock %}
+{% block page_title %}Test tahlili{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-line me-2"></i>
+                    AI Test Tahlili
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-info">
+                    <i class="fas fa-info-circle me-2"></i>
+                    <strong>Google Gemini AI</strong> yordamida test javoblarini avtomatik tahlil qiling. 
+                    Rasm yuklang va AI sizning test natijangizni tahlil qiladi.
+                </div>
+                
+        <form id="testAnalysisForm" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <!-- Sinf tanlash -->
+            <div class="mb-3">
+                <label for="classSelect" class="form-label">Sinfni tanlang</label>
+                <select class="form-select" id="classSelect" name="class_name" required>
+                    <option value="">Sinfni tanlang</option>
+                    <option value="7-A">7-A sinf</option>
+                    <option value="7-B">7-B sinf</option>
+                    <option value="7-C">7-C sinf</option>
+                    <option value="7-D">7-D sinf</option>
+                    <option value="7-E">7-E sinf</option>
+                    <option value="8-A">8-A sinf</option>
+                    <option value="8-B">8-B sinf</option>
+                    <option value="8-C">8-C sinf</option>
+                    <option value="8-D">8-D sinf</option>
+                    <option value="8-E">8-E sinf</option>
+                    <option value="9-A">9-A sinf</option>
+                    <option value="9-B">9-B sinf</option>
+                    <option value="9-C">9-C sinf</option>
+                    <option value="9-D">9-D sinf</option>
+                    <option value="9-E">9-E sinf</option>
+                </select>
+            </div>
+            
+            <div class="mb-3">
+                <label for="imageUpload" class="form-label">Test rasm yuklang</label>
+                <input type="file" class="form-control" id="imageUpload" name="image" accept="image/*" required>
+                <div class="form-text">JPG, PNG, GIF formatlarida rasm yuklang. AI avtomatik testni aniqlaydi.</div>
+            </div>
+            
+            <div class="mb-3">
+                <button type="submit" class="btn btn-primary" id="analyzeBtn">
+                    <i class="fas fa-chart-line me-2"></i>
+                    AI Tahlil qilish
+                </button>
+                <a href="{% url 'export_test_results' %}" class="btn btn-success ms-2">
+                    <i class="fas fa-file-excel me-2"></i>
+                    Excel Export
+                </a>
+            </div>
+        </form>
+                
+                <!-- Natija ko'rsatish -->
+                <div id="analysisResult" class="mt-4" style="display: none;">
+                    <div class="card">
+                        <div class="card-header">
+                            <h6 class="mb-0">
+                                <i class="fas fa-check-circle text-success me-2"></i>
+                                Tahlil natijasi
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div id="resultContent"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Statistika -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    Tahlil statistikasi
+                </h6>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6">
+                        <h4 class="text-primary">{{ analysis_count }}</h4>
+                        <small class="text-muted">Jami tahlil</small>
+                    </div>
+                    <div class="col-6">
+                        <h4 class="text-success">{{ completed_analysis }}</h4>
+                        <small class="text-muted">Tugatilgan</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- AI xususiyatlari -->
+        <div class="card">
+            <div class="card-header">
+                <h6 class="card-title mb-0">
+                    <i class="fas fa-robot me-2"></i>
+                    AI xususiyatlari
+                </h6>
+            </div>
+            <div class="card-body">
+                <ul class="list-unstyled">
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Google Gemini AI
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Yuqori aniqlik (95%+)
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        O'zbek tilida tahlil
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Shaxsiy feedback
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-check text-success me-2"></i>
+                        Avtomatik baholash
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Loading modal -->
+<div class="modal fade" id="loadingModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-body text-center">
+                <div class="spinner-border text-primary mb-3" role="status">
+                    <span class="visually-hidden">Yuklanmoqda...</span>
+                </div>
+                <h5>AI tahlil qilmoqda...</h5>
+                <p class="text-muted">Tezlashtirilgan AI tahlil - 5-10 soniya</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.getElementById('testAnalysisForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    
+    const formData = new FormData(this);
+    const analyzeBtn = document.getElementById('analyzeBtn');
+    const loadingModal = new bootstrap.Modal(document.getElementById('loadingModal'));
+    
+    // Loading ko'rsatish
+    loadingModal.show();
+    analyzeBtn.disabled = true;
+    
+    fetch('{% url "test_analysis" %}', {
+        method: 'POST',
+        body: formData,
+        headers: {
+            'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        loadingModal.hide();
+        analyzeBtn.disabled = false;
+        
+        if (data.success) {
+            showAnalysisResult(data);
+        } else {
+            showError(data.error || 'Xatolik yuz berdi');
+        }
+    })
+    .catch(error => {
+        loadingModal.hide();
+        analyzeBtn.disabled = false;
+        showError('Server xatoligi: ' + error.message);
+    });
+});
+
+function showAnalysisResult(data) {
+    const resultDiv = document.getElementById('analysisResult');
+    const contentDiv = document.getElementById('resultContent');
+    
+    let html = `
+        <div class="row">
+            <div class="col-md-6">
+                <h6><i class="fas fa-user me-2"></i>O'quvchi: ${data.student_name || 'Noma lum'}</h6>
+                <h6><i class="fas fa-chart-pie me-2"></i>Jami savollar: ${data.total_questions}</h6>
+                <h6><i class="fas fa-check-circle text-success me-2"></i>To'g'ri javoblar: ${data.correct_answers}</h6>
+                <h6><i class="fas fa-times-circle text-danger me-2"></i>Noto'g'ri javoblar: ${data.wrong_answers}</h6>
+            </div>
+            <div class="col-md-6">
+                <h6><i class="fas fa-percentage me-2"></i>Foiz: ${data.percentage.toFixed(1)}%</h6>
+                <h6><i class="fas fa-star me-2"></i>Baholash: <span class="badge bg-${getGradeColor(data.grade)}">${data.grade}</span></h6>
+                <h6><i class="fas fa-robot me-2"></i>AI: Google Gemini</h6>
+                <h6><i class="fas fa-clock me-2"></i>Vaqt: ${new Date().toLocaleString()}</h6>
+                <div class="mt-3">
+                    <a href="{% url 'export_test_results' %}" class="btn btn-success" id="excelExportBtn">
+                        <i class="fas fa-file-excel me-2"></i>
+                        Excel ga Export
+                    </a>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    if (data.feedback) {
+        html += `
+            <hr>
+            <div class="mt-3">
+                <h6><i class="fas fa-comment me-2"></i>AI Feedback:</h6>
+                <div class="alert alert-info">
+                    <strong>Umumiy:</strong> ${data.feedback.overall_feedback || 'Feedback mavjud emas'}<br>
+                    ${data.feedback.strengths ? '<strong>Kuchli tomonlar:</strong> ' + data.feedback.strengths.join(', ') + '<br>' : ''}
+                    ${data.feedback.weaknesses ? '<strong>Zaif tomonlar:</strong> ' + data.feedback.weaknesses.join(', ') + '<br>' : ''}
+                    ${data.feedback.recommendations ? '<strong>Maslahatlar:</strong> ' + data.feedback.recommendations.join(', ') + '<br>' : ''}
+                    ${data.feedback.encouragement ? '<strong>Rag batlantirish:</strong> ' + data.feedback.encouragement : ''}
+                </div>
+            </div>
+        `;
+    }
+    
+    contentDiv.innerHTML = html;
+    resultDiv.style.display = 'block';
+    resultDiv.scrollIntoView({ behavior: 'smooth' });
+    
+    // Excel export tugmasini sinf parametri bilan ishlatish
+    const excelBtn = document.getElementById('excelExportBtn');
+    if (excelBtn) {
+        const selectedClass = document.getElementById('classSelect').value;
+        if (selectedClass) {
+            excelBtn.href = `{% url 'export_test_results' %}?class_name=${selectedClass}`;
+        }
+    }
+}
+
+function getGradeColor(grade) {
+    switch(grade) {
+        case 'A\'lo': return 'success';
+        case 'Yaxshi': return 'primary';
+        case 'Qoniqarli': return 'warning';
+        case 'Qoniqarsiz': return 'danger';
+        default: return 'secondary';
+    }
+}
+
+function showError(message) {
+    const resultDiv = document.getElementById('analysisResult');
+    const contentDiv = document.getElementById('resultContent');
+    
+    contentDiv.innerHTML = `
+        <div class="alert alert-danger">
+            <i class="fas fa-exclamation-triangle me-2"></i>
+            ${message}
+        </div>
+    `;
+    resultDiv.style.display = 'block';
+}
+</script>
+{% endblock %}

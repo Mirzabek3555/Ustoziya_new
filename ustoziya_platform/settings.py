@@ -169,7 +169,19 @@ GOOGLE_PROJECT_ID = 'projects/980339613237'
 GOOGLE_PROJECT_NUMBER = '980339613237'
 
 # Google Gemini AI API settings
-GOOGLE_GEMINI_API_KEY = os.environ.get('GOOGLE_GEMINI_API_KEY', 'AIzaSyA7hPIidsVobpDQPGxPXb46yvEQhIMDzOo')
+GOOGLE_GEMINI_API_KEY = os.environ.get('GOOGLE_GEMINI_API_KEY', 'AIzaSyByZvlf85N9z-TK97JwiA6ETx8LzZ_zZn4')
+
+# OpenAI API settings
+OPENAI_API_KEY = os.environ.get('OPENAI_API_KEY', 'sk-your-openai-api-key-here')
+
+# Azure Computer Vision API settings
+AZURE_VISION_ENDPOINT = os.environ.get('AZURE_VISION_ENDPOINT', 'https://your-resource.cognitiveservices.azure.com/')
+AZURE_VISION_KEY = os.environ.get('AZURE_VISION_KEY', 'your-azure-vision-key-here')
+
+# AWS Textract API settings (ixtiyoriy)
+AWS_ACCESS_KEY_ID = os.environ.get('AWS_ACCESS_KEY_ID', '')
+AWS_SECRET_ACCESS_KEY = os.environ.get('AWS_SECRET_ACCESS_KEY', '')
+AWS_REGION = os.environ.get('AWS_REGION', 'us-east-1')
 
 # OpenRouter AI API settings (eski - o'chirilishi mumkin)
 OPENROUTER_API_KEY = 'sk-or-v1-1234567890abcdef'  # Bepul OpenRouter API key - haqiqiy key kerak

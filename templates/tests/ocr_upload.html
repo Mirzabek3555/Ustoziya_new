@@ -1,0 +1,276 @@
+{% extends 'base.html' %}
+
+{% block title %}Test Natijalarini OCR orqali Tahlil Qilish - Ustoziya Platformasi{% endblock %}
+{% block page_title %}Test Natijalarini OCR orqali Tahlil Qilish{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 mx-auto">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-camera me-2"></i>
+                    Test Natijalarini Rasm ko'rinishida Yuklash
+                </h5>
+            </div>
+            <div class="card-body">
+                <!-- Rasm yuklash formi -->
+                <form id="testOcrForm" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <div class="mb-4">
+                        <label for="test_image" class="form-label">Test natijalari rasmini yuklang *</label>
+                        <input type="file" class="form-control" id="test_image" name="test_image" accept="image/*" required>
+                        <div class="form-text">Qo'llab-quvvatlanadigan formatlar: JPG, PNG, GIF</div>
+                    </div>
+                    
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary btn-lg" id="analyzeBtn">
+                            <i class="fas fa-search me-2"></i>
+                            OCR orqali Tahlil Qilish
+                        </button>
+                    </div>
+                </form>
+                
+                <!-- Yuklangan rasm ko'rsatish -->
+                <div id="uploadedImage" class="mt-4" style="display: none;">
+                    <h6>Yuklangan rasm:</h6>
+                    <img id="previewImage" class="img-fluid rounded" style="max-height: 400px;">
+                </div>
+                
+                <!-- Natija ko'rsatish -->
+                <div id="analysisResult" class="mt-4" style="display: none;">
+                    <h6 class="text-success mb-3">
+                        <i class="fas fa-check-circle me-2"></i>
+                        OCR Tahlili Muvaffaqiyatli!
+                    </h6>
+                    
+                    <!-- Chiqarilgan matn -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">Chiqarilgan matn:</h6>
+                        </div>
+                        <div class="card-body">
+                            <pre id="extractedText" class="bg-light p-3 rounded" style="white-space: pre-wrap; font-size: 0.9rem;"></pre>
+                        </div>
+                    </div>
+                    
+                    <!-- Tahlil natijalari -->
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Test Ma'lumotlari:</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="testInfo"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="card">
+                                <div class="card-header">
+                                    <h6 class="mb-0">Statistika:</h6>
+                                </div>
+                                <div class="card-body">
+                                    <div id="statistics"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- O'quvchilar ro'yxati -->
+                    <div class="card mt-3">
+                        <div class="card-header">
+                            <h6 class="mb-0">O'quvchilar va Natijalar:</h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>T/r</th>
+                                            <th>O'quvchi ismi</th>
+                                            <th>Ball</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="studentsTable">
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Export tugmalari -->
+                    <div class="mt-3">
+                        <button type="button" class="btn btn-success me-2" id="exportToExcel">
+                            <i class="fas fa-file-excel me-2"></i>
+                            Excel ga Export
+                        </button>
+                        <button type="button" class="btn btn-info" id="exportToWord">
+                            <i class="fas fa-file-word me-2"></i>
+                            Word ga Export
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    let analysisData = null;
+    
+    // Rasm yuklash
+    document.getElementById('test_image').addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('uploadedImage').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        }
+    });
+    
+    // Form yuborish
+    document.getElementById('testOcrForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        const formData = new FormData(this);
+        const button = document.getElementById('analyzeBtn');
+        const originalText = button.innerHTML;
+        
+        button.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i>Tahlil qilinmoqda...';
+        button.disabled = true;
+        
+        fetch('{% url "test_ocr_upload" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                analysisData = data;
+                displayResults(data);
+                document.getElementById('analysisResult').style.display = 'block';
+            } else {
+                alert('Xatolik: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Server bilan aloqa xatoligi');
+        })
+        .finally(() => {
+            button.innerHTML = originalText;
+            button.disabled = false;
+        });
+    });
+    
+    // Natijalarni ko'rsatish
+    function displayResults(data) {
+        // Chiqarilgan matn
+        document.getElementById('extractedText').textContent = data.extracted_text;
+        
+        // Test ma'lumotlari
+        const testInfo = document.getElementById('testInfo');
+        testInfo.innerHTML = '';
+        if (data.analysis.test_info.grade) {
+            testInfo.innerHTML += `<p><strong>Sinf:</strong> ${data.analysis.test_info.grade}</p>`;
+        }
+        if (data.analysis.test_info.subject) {
+            testInfo.innerHTML += `<p><strong>Fan:</strong> ${data.analysis.test_info.subject}</p>`;
+        }
+        
+        // Statistika
+        const statistics = document.getElementById('statistics');
+        if (data.analysis.statistics.total_students) {
+            statistics.innerHTML = `
+                <p><strong>O'quvchilar soni:</strong> ${data.analysis.statistics.total_students}</p>
+                <p><strong>O'rtacha ball:</strong> ${data.analysis.statistics.average_score.toFixed(2)}</p>
+                <p><strong>Eng yuqori ball:</strong> ${data.analysis.statistics.max_score}</p>
+                <p><strong>Eng past ball:</strong> ${data.analysis.statistics.min_score}</p>
+            `;
+        }
+        
+        // O'quvchilar jadvali
+        const studentsTable = document.getElementById('studentsTable');
+        studentsTable.innerHTML = '';
+        data.analysis.students.forEach(student => {
+            const row = studentsTable.insertRow();
+            row.innerHTML = `
+                <td>${student.number}</td>
+                <td>${student.name}</td>
+                <td>${student.score}</td>
+            `;
+        });
+    }
+    
+    // Excel export
+    document.getElementById('exportToExcel').addEventListener('click', function() {
+        if (!analysisData) {
+            alert('Avval tahlil qilish kerak');
+            return;
+        }
+        
+        // Excel export funksiyasi
+        exportToExcel(analysisData);
+    });
+    
+    // Word export
+    document.getElementById('exportToWord').addEventListener('click', function() {
+        if (!analysisData) {
+            alert('Avval tahlil qilish kerak');
+            return;
+        }
+        
+        // Word export funksiyasi
+        exportToWord(analysisData);
+    });
+    
+    // Excel export funksiyasi
+    function exportToExcel(data) {
+        // Bu funksiya keyinroq to'ldiriladi
+        alert('Excel export funksiyasi ishlab chiqilmoqda');
+    }
+    
+    // Word export funksiyasi
+    function exportToWord(data) {
+        // Bu funksiya keyinroq to'ldiriladi
+        alert('Word export funksiyasi ishlab chiqilmoqda');
+    }
+});
+</script>
+
+<style>
+.card {
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    border: none;
+}
+
+.form-control:focus {
+    border-color: #007bff;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.btn {
+    border-radius: 8px;
+}
+
+.table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+pre {
+    max-height: 300px;
+    overflow-y: auto;
+}
+</style>
+{% endblock %}

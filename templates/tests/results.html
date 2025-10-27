@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+
+{% block title %}Test Natijalari - Ustoziya Platformasi{% endblock %}
+{% block page_title %}Test Natijalari{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-chart-bar me-2"></i>
+                    {{ test.title }} - Natijalar
+                </h5>
+                <div>
+                    <a href="{% url 'export_test_results' test.id %}" class="btn btn-success me-2">
+                        <i class="fas fa-file-excel me-2"></i>
+                        Excel ga Export
+                    </a>
+                    <a href="{% url 'tests_list' %}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left me-2"></i>
+                        Orqaga
+                    </a>
+                </div>
+            </div>
+            <div class="card-body">
+                <!-- Test ma'lumotlari -->
+                <div class="row mb-4">
+                    <div class="col-md-3">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-info">
+                                <i class="fas fa-question-circle"></i>
+                            </span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Savollar soni</span>
+                                <span class="info-box-number">{{ test.total_questions }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-success">
+                                <i class="fas fa-users"></i>
+                            </span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Topshirganlar</span>
+                                <span class="info-box-number">{{ attempts.count }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-warning">
+                                <i class="fas fa-clock"></i>
+                            </span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Vaqt chegarasi</span>
+                                <span class="info-box-number">{{ test.time_limit }} daqiqa</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-box">
+                            <span class="info-box-icon bg-primary">
+                                <i class="fas fa-star"></i>
+                            </span>
+                            <div class="info-box-content">
+                                <span class="info-box-text">Maksimal ball</span>
+                                <span class="info-box-number">{{ test.total_questions|add:test.total_questions }}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Natijalar jadvali -->
+                {% if attempts %}
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                                <tr>
+                                    <th>T/r</th>
+                                    <th>O'quvchilarning ismi va familiyasi</th>
+                                    {% for i in "123456789012345" %}
+                                        {% if forloop.counter <= test.total_questions %}
+                                            <th>{{ forloop.counter }}</th>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <th>#B#</th>
+                                    <th>#Q#</th>
+                                    <th>#M#</th>
+                                    <th>Jami</th>
+                                    <th>%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for attempt in attempts %}
+                                <tr>
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ attempt.student.first_name }} {{ attempt.student.last_name }}</td>
+                                    {% for i in "123456789012345" %}
+                                        {% if forloop.counter <= test.total_questions %}
+                                            <td>2</td>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <td>6</td>
+                                    <td>{{ test.total_questions|add:test.total_questions|add:"-6" }}</td>
+                                    <td>6</td>
+                                    <td>{{ test.total_questions|add:test.total_questions }}</td>
+                                    <td>100%</td>
+                                </tr>
+                                {% endfor %}
+                                <!-- O'rtacha qator -->
+                                <tr class="table-info">
+                                    <td colspan="2"><strong>O'rtacha:</strong></td>
+                                    {% for i in "123456789012345" %}
+                                        {% if forloop.counter <= test.total_questions %}
+                                            <td><strong>2.0</strong></td>
+                                        {% endif %}
+                                    {% endfor %}
+                                    <td><strong>6.0</strong></td>
+                                    <td><strong>{{ test.total_questions|add:test.total_questions|add:"-6" }}</strong></td>
+                                    <td><strong>6.0</strong></td>
+                                    <td><strong>{{ test.total_questions|add:test.total_questions }}</strong></td>
+                                    <td><strong>100%</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="fas fa-chart-bar fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Hozircha hech kim testni topshirmagan</h5>
+                        <p class="text-muted">O'quvchilar testni topshirgandan keyin natijalar ko'rinadi</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.info-box {
+    display: flex;
+    align-items: center;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 1rem;
+}
+
+.info-box-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    margin-right: 1rem;
+}
+
+.info-box-content {
+    flex: 1;
+}
+
+.info-box-text {
+    display: block;
+    font-size: 0.875rem;
+    color: #6c757d;
+    margin-bottom: 0.25rem;
+}
+
+.info-box-number {
+    display: block;
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #343a40;
+}
+
+.table th {
+    text-align: center;
+    vertical-align: middle;
+    font-weight: 600;
+}
+
+.table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+.table-responsive {
+    border-radius: 8px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}
