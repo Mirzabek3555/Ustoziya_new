@@ -39,16 +39,20 @@
                     <div class="col-md-3">
                         <select class="form-select" id="filterSubject" onchange="filterTests()">
                             <option value="">Barcha fanlar</option>
-                            <option value="matematika">Matematika</option>
-                            <option value="fizika">Fizika</option>
-                            <option value="kimyo">Kimyo</option>
-                            <option value="biologiya">Biologiya</option>
-                            <option value="geografiya">Geografiya</option>
-                            <option value="tarix">Tarix</option>
-                            <option value="adabiyot">Adabiyot</option>
-                            <option value="ingliz_tili">Ingliz tili</option>
-                            <option value="informatika">Informatika</option>
-                            <option value="rus_tili">Rus tili</option>
+                            <option value="mathematics">Matematika</option>
+                            <option value="physics">Fizika</option>
+                            <option value="chemistry">Kimyo</option>
+                            <option value="biology">Biologiya</option>
+                            <option value="geography">Geografiya</option>
+                            <option value="history">Tarix</option>
+                            <option value="literature">Adabiyot</option>
+                            <option value="language">Til va adabiyot</option>
+                            <option value="english">Ingliz tili</option>
+                            <option value="russian">Rus tili</option>
+                            <option value="computer_science">Informatika</option>
+                            <option value="art">San'at</option>
+                            <option value="physical_education">Jismoniy tarbiya</option>
+                            <option value="other">Boshqa</option>
                         </select>
                     </div>
                     <div class="col-md-3">
@@ -70,9 +74,9 @@
                         <div class="row">
                             {% for test in tests %}
                             <div class="col-md-6 col-lg-4 mb-4 test-card" 
-                                 data-grade="{{ test.grade_level }}" 
-                                 data-subject="{{ test.subject }}" 
-                                 data-difficulty="{{ test.difficulty }}"
+                                 data-grade="{{ test.grade_level|lower }}" 
+                                 data-subject="{{ test.subject|lower }}" 
+                                 data-difficulty="{{ test.difficulty|lower }}"
                                  data-title="{{ test.title|lower }}"
                                  data-description="{{ test.description|lower }}">
                                 <div class="card h-100">
@@ -94,7 +98,7 @@
                                     <div class="card-footer">
                                         <div class="d-flex justify-content-between">
                                             <small class="text-muted">{{ test.author.get_full_name }}</small>
-                                            <a href="#" class="btn btn-sm btn-outline-primary">Ko'rish</a>
+                                            <a href="{% url 'test_detail' test.id %}" class="btn btn-sm btn-outline-primary" target="_blank">Ko'rish</a>
                                         </div>
                                     </div>
                                 </div>
@@ -125,25 +129,36 @@ function filterTests() {
     const difficultyFilter = document.getElementById('filterDifficulty').value.toLowerCase();
     const searchInput = document.getElementById('searchInput').value.toLowerCase();
     
+    console.log('Filter values:', { gradeFilter, subjectFilter, difficultyFilter, searchInput });
+    
     const testCards = document.querySelectorAll('.test-card');
     let visibleCount = 0;
     
     testCards.forEach(card => {
-        const grade = card.getAttribute('data-grade').toLowerCase();
-        const subject = card.getAttribute('data-subject').toLowerCase();
-        const difficulty = card.getAttribute('data-difficulty').toLowerCase();
+        const grade = card.getAttribute('data-grade').toLowerCase().trim();
+        const subject = card.getAttribute('data-subject').toLowerCase().trim();
+        const difficulty = card.getAttribute('data-difficulty').toLowerCase().trim();
         const title = card.getAttribute('data-title');
         const description = card.getAttribute('data-description');
         
         let show = true;
         
-        // Grade filter
-        if (gradeFilter && !grade.includes(gradeFilter)) {
-            show = false;
+        // Grade filter - more flexible matching
+        if (gradeFilter) {
+            // Try exact match first
+            if (grade !== gradeFilter) {
+                // Try partial match (e.g., "9" matches "9-sinf")
+                const gradeNumber = gradeFilter.replace('-sinf', '');
+                const cardGradeNumber = grade.replace('-sinf', '');
+                console.log(`Grade comparison: "${gradeNumber}" vs "${cardGradeNumber}"`);
+                if (gradeNumber !== cardGradeNumber) {
+                    show = false;
+                }
+            }
         }
         
         // Subject filter
-        if (subjectFilter && !subject.includes(subjectFilter)) {
+        if (subjectFilter && subject !== subjectFilter) {
             show = false;
         }
         
@@ -197,6 +212,10 @@ document.addEventListener('DOMContentLoaded', function() {
             <i class="fas fa-times me-2"></i>
             Filtrlarni tozalash
         </button>
+        <button class="btn btn-outline-info btn-sm ms-2" onclick="debugFilters()">
+            <i class="fas fa-bug me-2"></i>
+            Debug
+        </button>
     `;
     filterRow.appendChild(clearButton);
 });
@@ -207,6 +226,34 @@ function clearFilters() {
     document.getElementById('filterDifficulty').value = '';
     document.getElementById('searchInput').value = '';
     filterTests();
+}
+
+function debugFilters() {
+    console.log('=== DEBUG FILTERS ===');
+    const testCards = document.querySelectorAll('.test-card');
+    console.log('Total test cards found:', testCards.length);
+    
+    testCards.forEach((card, index) => {
+        const grade = card.getAttribute('data-grade');
+        const subject = card.getAttribute('data-subject');
+        const difficulty = card.getAttribute('data-difficulty');
+        const title = card.getAttribute('data-title');
+        
+        console.log(`Card ${index + 1}:`, {
+            grade: `"${grade}"`,
+            subject: `"${subject}"`,
+            difficulty: `"${difficulty}"`,
+            title: title.substring(0, 50)
+        });
+    });
+    
+    console.log('Current filter values:', {
+        grade: document.getElementById('filterGrade').value,
+        subject: document.getElementById('filterSubject').value,
+        difficulty: document.getElementById('filterDifficulty').value,
+        search: document.getElementById('searchInput').value
+    });
+    console.log('=== END DEBUG ===');
 }
 </script>
 

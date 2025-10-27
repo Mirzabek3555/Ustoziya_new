@@ -1,0 +1,188 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ test.title }} - Ustoziya Platformasi{% endblock %}
+{% block page_title %}{{ test.title }}{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-question-circle me-2"></i>
+                        {{ test.title }}
+                    </h5>
+                    <div>
+                        <span class="badge bg-success me-2">{{ test.get_difficulty_display }}</span>
+                        <span class="badge bg-info me-2">{{ test.grade_level }}</span>
+                        <span class="badge bg-secondary">{{ test.subject }}</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body">
+                <div class="row mb-4">
+                    <div class="col-md-8">
+                        <h6>Test haqida:</h6>
+                        <p class="text-muted">{{ test.description }}</p>
+                    </div>
+                    <div class="col-md-4">
+                        <div class="row text-center">
+                            <div class="col-4">
+                                <div class="border rounded p-2">
+                                    <h6 class="text-primary mb-1">{{ test.total_questions }}</h6>
+                                    <small class="text-muted">Savollar</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="border rounded p-2">
+                                    <h6 class="text-success mb-1">{{ test.time_limit }}</h6>
+                                    <small class="text-muted">Daqiqa</small>
+                                </div>
+                            </div>
+                            <div class="col-4">
+                                <div class="border rounded p-2">
+                                    <h6 class="text-warning mb-1">{{ test.total_points }}</h6>
+                                    <small class="text-muted">Ball</small>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {% if questions %}
+                    <h6 class="mb-3">Savollar:</h6>
+                    <div class="questions-list">
+                        {% for question in questions %}
+                        <div class="card mb-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="card-title mb-0">Savol {{ question.order }}</h6>
+                                    <span class="badge bg-primary">{{ question.points }} ball</span>
+                                </div>
+                                <p class="card-text">{{ question.question_text }}</p>
+                                
+                                {% if question.question_type == 'single_choice' %}
+                                    <div class="answers">
+                                        {% for answer in question.answers.all %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="answer_{{ answer.id }}" disabled>
+                                            <label class="form-check-label" for="answer_{{ answer.id }}">
+                                                {{ answer.answer_text }}
+                                                {% if answer.is_correct %}
+                                                    <span class="text-success ms-2">
+                                                        <i class="fas fa-check"></i> To'g'ri javob
+                                                    </span>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                {% elif question.question_type == 'multiple_choice' %}
+                                    <div class="answers">
+                                        {% for answer in question.answers.all %}
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" name="question_{{ question.id }}" id="answer_{{ answer.id }}" disabled>
+                                            <label class="form-check-label" for="answer_{{ answer.id }}">
+                                                {{ answer.answer_text }}
+                                                {% if answer.is_correct %}
+                                                    <span class="text-success ms-2">
+                                                        <i class="fas fa-check"></i> To'g'ri javob
+                                                    </span>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                        {% endfor %}
+                                    </div>
+                                {% elif question.question_type == 'true_false' %}
+                                    <div class="answers">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="true_{{ question.id }}" disabled>
+                                            <label class="form-check-label" for="true_{{ question.id }}">
+                                                To'g'ri
+                                                {% if question.answers.first.is_correct and question.answers.first.answer_text == 'True' %}
+                                                    <span class="text-success ms-2">
+                                                        <i class="fas fa-check"></i> To'g'ri javob
+                                                    </span>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="radio" name="question_{{ question.id }}" id="false_{{ question.id }}" disabled>
+                                            <label class="form-check-label" for="false_{{ question.id }}">
+                                                Noto'g'ri
+                                                {% if question.answers.first.is_correct and question.answers.first.answer_text == 'False' %}
+                                                    <span class="text-success ms-2">
+                                                        <i class="fas fa-check"></i> To'g'ri javob
+                                                    </span>
+                                                {% endif %}
+                                            </label>
+                                        </div>
+                                    </div>
+                                {% endif %}
+                                
+                                {% if question.explanation %}
+                                    <div class="mt-3">
+                                        <small class="text-muted">
+                                            <strong>Tushuntirish:</strong> {{ question.explanation }}
+                                        </small>
+                                    </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-4">
+                        <i class="fas fa-question-circle fa-3x text-muted mb-3"></i>
+                        <h5 class="text-muted">Bu testda hozircha savollar yo'q</h5>
+                    </div>
+                {% endif %}
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <small class="text-muted">
+                        Muallif: {{ test.author.get_full_name }} | 
+                        Yaratilgan: {{ test.created_at|date:"d.m.Y H:i" }}
+                    </small>
+                    <div>
+                        <a href="{% url 'tests_list' %}" class="btn btn-outline-secondary me-2">
+                            <i class="fas fa-arrow-left me-2"></i>
+                            Orqaga
+                        </a>
+                        <button class="btn btn-primary" onclick="startTest()">
+                            <i class="fas fa-play me-2"></i>
+                            Testni boshlash
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function startTest() {
+    // Redirect to test start page or implement test taking functionality
+    alert('Test boshlash funksiyasi tez orada qo\'shiladi!');
+}
+</script>
+
+<style>
+.questions-list .card {
+    border-left: 4px solid #007bff;
+}
+
+.answers .form-check {
+    margin-bottom: 0.5rem;
+}
+
+.answers .form-check-input:disabled {
+    opacity: 0.6;
+}
+
+.answers .form-check-label {
+    cursor: default;
+}
+</style>
+{% endblock %}

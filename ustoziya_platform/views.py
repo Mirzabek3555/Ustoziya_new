@@ -227,9 +227,20 @@ def tests_list(request):
     """Testlar ro'yxati"""
     tests = Test.objects.filter(is_public=True, is_active=True).order_by('-created_at')
     
+    # Debug: Print sample data
+    if request.GET.get('debug') == '1':
+        print("=== DEBUG: Sample test data ===")
+        if tests.exists():
+            for test in tests[:3]:
+                print(f"ID: {test.id}, Grade: '{test.grade_level}', Subject: '{test.subject}', Difficulty: '{test.difficulty}'")
+        else:
+            print("No tests found in database")
+        print("=== END DEBUG ===")
+    
     # Filtrlash
     category = request.GET.get('category')
     subject = request.GET.get('subject')
+    grade_level = request.GET.get('grade')
     difficulty = request.GET.get('difficulty')
     search = request.GET.get('search')
     
@@ -237,6 +248,8 @@ def tests_list(request):
         tests = tests.filter(category_id=category)
     if subject:
         tests = tests.filter(subject=subject)
+    if grade_level:
+        tests = tests.filter(grade_level=grade_level)
     if difficulty:
         tests = tests.filter(difficulty=difficulty)
     if search:
@@ -246,6 +259,22 @@ def tests_list(request):
         'tests': tests,
     }
     return render(request, 'tests/list.html', context)
+
+
+@login_required
+def test_detail(request, pk):
+    """Test tafsilotlari"""
+    from django.shortcuts import get_object_or_404
+    test = get_object_or_404(Test, pk=pk, is_public=True, is_active=True)
+    
+    # Get questions for this test
+    questions = test.questions.all().order_by('order')
+    
+    context = {
+        'test': test,
+        'questions': questions,
+    }
+    return render(request, 'tests/detail.html', context)
 
 
 @login_required
