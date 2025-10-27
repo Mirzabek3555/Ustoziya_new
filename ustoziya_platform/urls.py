@@ -39,7 +39,7 @@ urlpatterns = [
     path('api/auth/', include('accounts.urls')),
     path('api/materials/', include('materials.urls')),
     path('api/tests/', include('tests.urls')),
-    path('api/ocr/', include('ocr_processing.urls')),
+    path('api/ocr/', include('ocr_processing.urls', namespace='ocr_processing')),
 ]
 
 # Media fayllar uchun

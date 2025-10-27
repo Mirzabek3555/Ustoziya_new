@@ -1,6 +1,8 @@
 from django.urls import path
 from . import views
 
+app_name = 'ocr_processing'
+
 urlpatterns = [
     path('upload/', views.upload_test_image, name='upload_test_image'),
     path('processings/', views.ocr_processing_list, name='ocr_processing_list'),

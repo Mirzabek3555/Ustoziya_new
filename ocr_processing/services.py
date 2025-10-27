@@ -1,4 +1,4 @@
-import cv2
+# import cv2  # Temporarily commented out due to installation issues
 import numpy as np
 import pytesseract
 from PIL import Image
@@ -33,25 +33,11 @@ class OCRService:
             self.vision_client = None
     
     def preprocess_image(self, image_path):
-        """Rasmni oldindan qayta ishlash"""
+        """Rasmni oldindan qayta ishlash - temporarily disabled due to OpenCV installation issues"""
         try:
-            # Rasmni o'qish
-            image = cv2.imread(image_path)
-            
-            # Rangli rasmni kulrangga aylantirish
-            gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-            
-            # Shovqinni kamaytirish
-            denoised = cv2.medianBlur(gray, 3)
-            
-            # Kontrastni oshirish
-            clahe = cv2.createCLAHE(clipLimit=2.0, tileGridSize=(8, 8))
-            enhanced = clahe.apply(denoised)
-            
-            # Otsu thresholding
-            _, thresh = cv2.threshold(enhanced, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-            
-            return thresh
+            # OpenCV is temporarily disabled, return None to skip preprocessing
+            logger.warning("Image preprocessing is disabled due to OpenCV installation issues")
+            return None
         except Exception as e:
             logger.error(f"Rasmni qayta ishlashda xatolik: {e}")
             return None
@@ -102,7 +88,18 @@ class OCRService:
             processed_image = self.preprocess_image(image_path)
             
             if processed_image is None:
-                return None, 0.0
+                # If preprocessing is disabled, use the original image
+                logger.warning("Using original image for Tesseract OCR (preprocessing disabled)")
+                # OCR qilish
+                custom_config = r'--oem 3 --psm 6 -l uzb+eng'
+                text = pytesseract.image_to_string(image_path, config=custom_config)
+                
+                # Ishonch darajasini olish
+                data = pytesseract.image_to_data(image_path, output_type=pytesseract.Output.DICT)
+                confidences = [int(conf) for conf in data['conf'] if int(conf) > 0]
+                avg_confidence = sum(confidences) / len(confidences) if confidences else 0
+                
+                return text.strip(), avg_confidence
             
             # OCR qilish
             custom_config = r'--oem 3 --psm 6 -l uzb+eng'

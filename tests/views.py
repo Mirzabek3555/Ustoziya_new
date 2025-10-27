@@ -81,6 +81,9 @@ class TestCreateView(generics.CreateAPIView):
     
     def create(self, request, *args, **kwargs):
         """Test yaratish - AI funksiyasi bilan"""
+        import logging
+        logger = logging.getLogger(__name__)
+        
         # AI test generation parametrlarini tekshirish
         ai_request = request.data.get('ai_generation')
         
@@ -482,6 +485,9 @@ def test_stats(request, pk):
 @permission_classes([IsAuthenticated])
 def generate_ai_test(request):
     """AI yordamida test yaratish"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         # Ma'lumotlarni olish
         subject = request.data.get('subject')
@@ -570,14 +576,14 @@ def generate_ai_test(request):
 @permission_classes([IsAuthenticated])
 def export_test_to_word(request):
     """Testni Word formatida export qilish"""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     try:
         from docx import Document
         from docx.shared import Inches
         from django.http import HttpResponse
         import io
-        import logging
-        
-        logger = logging.getLogger(__name__)
         
         test_id = request.data.get('test_id')
         if not test_id:
