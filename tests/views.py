@@ -572,7 +572,7 @@ def generate_ai_test(request):
         }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
 
-@api_view(['POST'])
+@api_view(['GET', 'POST'])
 @permission_classes([IsAuthenticated])
 def export_test_to_word(request):
     """Testni Word formatida export qilish"""
@@ -585,7 +585,12 @@ def export_test_to_word(request):
         from django.http import HttpResponse
         import io
         
-        test_id = request.data.get('test_id')
+        # GET va POST so'rovlarni qo'llab-quvvatlash
+        if request.method == 'GET':
+            test_id = request.GET.get('test_id')
+        else:
+            test_id = request.data.get('test_id')
+            
         if not test_id:
             return Response({'error': 'Test ID kerak'}, status=status.HTTP_400_BAD_REQUEST)
         

@@ -104,16 +104,7 @@
                                     <div class="card-footer">
                                         <div class="d-flex justify-content-between">
                                             <small class="text-muted">{{ test.author.get_full_name }}</small>
-<<<<<<< HEAD
-                                            <a href="{% url 'test_detail' test.id %}" class="btn btn-sm btn-outline-primary" target="_blank">Ko'rish</a>
-=======
-                                            <div>
-                                                <a href="{% url 'test_results' test.id %}" class="btn btn-sm btn-outline-success me-1">
-                                                    <i class="fas fa-chart-bar"></i>
-                                                </a>
-                                                <a href="#" class="btn btn-sm btn-outline-primary">Ko'rish</a>
-                                            </div>
->>>>>>> 0c017e790f84d71572a687d1104cb354dcdea57b
+                                            <a href="{% url 'export_test_to_word' %}?test_id={{ test.id }}" class="btn btn-sm btn-outline-primary" target="_blank">Ko'rish</a>
                                         </div>
                                     </div>
                                 </div>
