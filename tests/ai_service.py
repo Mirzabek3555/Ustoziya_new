@@ -11,21 +11,31 @@ class AITestGenerationService:
     
     def __init__(self):
         # Google Gemini API'ni sozlash
-        genai.configure(api_key=settings.GOOGLE_GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-2.5-flash')
+        try:
+            genai.configure(api_key=settings.GOOGLE_GEMINI_API_KEY)
+            self.model = genai.GenerativeModel('gemini-pro')  # gemini-pro yoki gemini-1.5-pro
+        except Exception as e:
+            logger.error(f"Gemini API sozlashda xatolik: {e}")
+            self.model = None
     
     def generate_test_questions(self, subject, grade_level, difficulty, num_questions=5, language='uzbek'):
         """AI yordamida test savollarini yaratish"""
         try:
+            # Agar model mavjud bo'lmasa, mock data qaytarish
+            if not self.model:
+                logger.warning("Gemini model mavjud emas, mock data qaytarilmoqda")
+                return self._generate_mock_questions(subject, grade_level, difficulty, num_questions)
+            
             # Agar API key test bo'lsa, mock data qaytarish
-            if settings.GOOGLE_GEMINI_API_KEY == 'YOUR_API_KEY_HERE':
-                logger.warning("Test API key ishlatilmoqda, mock data qaytarilmoqda")
+            if settings.GOOGLE_GEMINI_API_KEY in ['YOUR_API_KEY_HERE', 'AIzaSyA7hPIidsVobpDQPGxPXb46yvEQhIMDzOo']:
+                logger.warning("Demo API key ishlatilmoqda, mock data qaytarilmoqda")
                 return self._generate_mock_questions(subject, grade_level, difficulty, num_questions)
             
             # Prompt yaratish
             prompt = self._create_prompt(subject, grade_level, difficulty, num_questions, language)
             
             # Gemini'ga so'rov yuborish
+            logger.info(f"Gemini'ga so'rov yuborilmoqda: {subject}, {grade_level}, {difficulty}")
             response = self.model.generate_content(prompt)
             response_text = response.text
             

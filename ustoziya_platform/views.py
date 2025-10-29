@@ -8,7 +8,7 @@ import json
 
 from accounts.models import User
 from materials.models import Material, Assignment, VideoLesson, Model3D
-from tests.models import Test
+from tests.models import Test, Question, Answer, TestCategory
 from ocr_processing.models import OCRProcessing
 
 
@@ -190,11 +190,25 @@ def material_create(request):
     """Yangi material yaratish"""
     if request.method == 'POST':
         try:
+            from materials.models import MaterialCategory
+            
+            # Kategoriyani olish yoki yaratish
+            category_id = request.POST.get('category')
+            if category_id:
+                category = MaterialCategory.objects.get(id=category_id)
+            else:
+                # Agar kategoriya tanlanmagan bo'lsa, default kategoriya yaratamiz
+                category, created = MaterialCategory.objects.get_or_create(
+                    name='Umumiy',
+                    defaults={'description': 'Umumiy materiallar'}
+                )
+            
             # Material yaratish
             material = Material.objects.create(
                 title=request.POST.get('title'),
-                description=request.POST.get('description'),
+                description=request.POST.get('description', ''),
                 material_type=request.POST.get('material_type'),
+                category=category,
                 grade_level=request.POST.get('grade_level', ''),
                 tags=request.POST.get('tags', ''),
                 is_public=request.POST.get('is_public') == 'on',
@@ -207,19 +221,21 @@ def material_create(request):
                 material.thumbnail = request.FILES['thumbnail']
                 material.save()
             
-            return JsonResponse({
-                'success': True,
-                'message': 'Material muvaffaqiyatli yaratildi!',
-                'material_id': material.id
-            })
+            messages.success(request, 'Material muvaffaqiyatli yaratildi!')
+            return redirect('materials_list')
             
         except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': f'Xatolik yuz berdi: {str(e)}'
-            })
+            messages.error(request, f'Xatolik yuz berdi: {str(e)}')
+            return render(request, 'materials/create.html')
     
-    return render(request, 'materials/create.html')
+    # Kategoriyalarni olish
+    from materials.models import MaterialCategory
+    categories = MaterialCategory.objects.all()
+    
+    context = {
+        'categories': categories,
+    }
+    return render(request, 'materials/create.html', context)
 
 
 @login_required
@@ -253,14 +269,25 @@ def test_create(request):
     """Yangi test yaratish"""
     if request.method == 'POST':
         try:
+            # Kategoriyani olish yoki yaratish
+            category_id = request.POST.get('category')
+            if category_id:
+                category = TestCategory.objects.get(id=category_id)
+            else:
+                # Agar kategoriya tanlanmagan bo'lsa, default kategoriya yaratamiz
+                category, created = TestCategory.objects.get_or_create(
+                    name='Umumiy',
+                    defaults={'description': 'Umumiy testlar'}
+                )
+            
             # Test yaratish
             test = Test.objects.create(
                 title=request.POST.get('title'),
                 description=request.POST.get('description', ''),
-                category_id=request.POST.get('category'),
-                subject=request.POST.get('subject'),
-                grade_level=request.POST.get('grade_level'),
-                difficulty=request.POST.get('difficulty'),
+                category=category,
+                subject=request.POST.get('subject', 'Umumiy'),
+                grade_level=request.POST.get('grade_level', 'Barcha sinflar'),
+                difficulty=request.POST.get('difficulty', 'medium'),
                 time_limit=int(request.POST.get('time_limit', 60)),
                 is_public=request.POST.get('is_public') == 'true',
                 author=request.user
@@ -309,7 +336,6 @@ def test_create(request):
             })
     
     # Kategoriyalarni olish
-    from tests.models import TestCategory
     categories = TestCategory.objects.all()
     
     context = {

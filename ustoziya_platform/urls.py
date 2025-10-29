@@ -34,7 +34,7 @@ urlpatterns = [
     path('videos/', views.videos_list, name='videos_list'),
     path('3d-models/', views.models_3d_list, name='models_3d_list'),
     path('tests/', views.tests_list, name='tests_list'),
-    path('tests/create/', views.test_create, name='test_create'),
+    path('tests/create/', views.test_create, name='test_create_page'),
     path('ocr/', views.ocr_upload, name='ocr_upload'),
     path('api/auth/', include('accounts.urls')),
     path('api/materials/', include('materials.urls')),

@@ -3,8 +3,11 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db.models import Q, Avg
 from django.utils import timezone
+import logging
+
+logger = logging.getLogger(__name__)
 
 from .models import Test, Question, Answer, TestAttempt, StudentAnswer, TestCategory
 from .serializers import (
@@ -463,10 +466,10 @@ def test_stats(request, pk):
     total_attempts = attempts.count()
     completed_attempts = attempts.filter(is_completed=True).count()
     avg_score = attempts.filter(is_completed=True).aggregate(
-        avg_score=models.Avg('score')
+        avg_score=Avg('score')
     )['avg_score'] or 0
     avg_percentage = attempts.filter(is_completed=True).aggregate(
-        avg_percentage=models.Avg('percentage')
+        avg_percentage=Avg('percentage')
     )['avg_percentage'] or 0
     
     return Response({
