@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Attestatsiya — Materiallar{% endblock %}
+{% block page_title %}Attestatsiya — Materiallar{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-5 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-upload me-2"></i>Material yuklash</h6>
+            </div>
+            <div class="card-body">
+                <form method="POST" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Sarlavha</label>
+                        <input type="text" name="title" class="form-control" placeholder="Masalan: Algebra formulalar to'plami" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Tavsif</label>
+                        <textarea name="description" class="form-control" rows="2" placeholder="Qisqa izoh"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fan</label>
+                            <input type="text" name="subject" class="form-control" placeholder="Masalan: mathematics">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Sinf</label>
+                            <input type="text" name="grade_level" class="form-control" placeholder="Masalan: 9-sinf">
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Qiyinlik</label>
+                            <select class="form-select" name="difficulty">
+                                <option value="easy">Oson</option>
+                                <option value="medium" selected>O'rta</option>
+                                <option value="hard">Qiyin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Fayl</label>
+                            <input type="file" name="file" class="form-control" accept=".png,.jpg,.jpeg,.webp,.docx,.pdf,.txt" required>
+                        </div>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-upload me-2"></i>Yuklash va tahlil qilish
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6 class="mb-0"><i class="fas fa-database me-2"></i>Yuklangan materiallar</h6>
+                <a href="{% url 'attestation_home' %}" class="btn btn-sm btn-outline-secondary">Bo'limga qaytish</a>
+            </div>
+            <div class="card-body">
+                {% if materials %}
+                <div class="table-responsive">
+                    <table class="table align-middle">
+                        <thead>
+                            <tr>
+                                <th>Sarlavha</th>
+                                <th>Tur</th>
+                                <th>Fan / Sinf</th>
+                                <th>Matn (so'zlar)</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for m in materials %}
+                            <tr>
+                                <td>{{ m.title }}</td>
+                                <td><span class="badge bg-secondary">{{ m.source_type }}</span></td>
+                                <td>{{ m.subject|default:'-' }} / {{ m.grade_level|default:'-' }}</td>
+                                <td>{{ m.extracted_text|length }}</td>
+                                <td class="text-end">
+                                    <a href="{% url 'attestation_generate_from_material' m.id %}" class="btn btn-sm btn-success">
+                                        <i class="fas fa-magic me-1"></i> Test yaratish
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div class="text-center text-muted py-4">
+                    Hozircha material yuklanmagan.
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

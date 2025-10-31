@@ -1,6 +1,7 @@
 from django.db import models
 from django.contrib.auth import get_user_model
 from django.utils import timezone
+from django.conf import settings
 
 User = get_user_model()
 
@@ -280,3 +281,32 @@ class StudentAnswer(models.Model):
     
     def __str__(self):
         return f"{self.attempt.student_name} - {self.question.question_text[:30]}..."
+
+
+class AttestationMaterial(models.Model):
+    """Davlat attestatsiyasi uchun manbalar (rasm, docx, pdf, txt)."""
+    SOURCE_TYPES = [
+        ('image', 'Rasm'),
+        ('docx', 'DOCX hujjat'),
+        ('pdf', 'PDF hujjat'),
+        ('txt', 'Matn fayl'),
+    ]
+
+    title = models.CharField(max_length=200)
+    description = models.TextField(blank=True, null=True)
+    source_type = models.CharField(max_length=10, choices=SOURCE_TYPES)
+    file = models.FileField(upload_to='attestation/')
+    extracted_text = models.TextField(blank=True, null=True)
+    subject = models.CharField(max_length=50, blank=True, null=True)
+    grade_level = models.CharField(max_length=50, blank=True, null=True)
+    difficulty = models.CharField(max_length=10, choices=Test.DIFFICULTY_CHOICES, default='medium')
+    uploaded_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name='attestation_materials')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = 'Attestatsiya manbasi'
+        verbose_name_plural = 'Attestatsiya manbalari'
+        ordering = ['-created_at']
+
+    def __str__(self) -> str:
+        return self.title

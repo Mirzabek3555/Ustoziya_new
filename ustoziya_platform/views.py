@@ -1,4 +1,5 @@
 from django.shortcuts import render, redirect
+from django.db.models import Q
 from django.contrib.auth import login, authenticate
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
@@ -10,7 +11,9 @@ import io
 
 from accounts.models import User
 from materials.models import Material, Assignment, VideoLesson, Model3D
-from tests.models import Test
+from tests.models import Test, Question, Answer, TestCategory, AttestationMaterial
+from tests.ai_service import AITestGenerationService
+from tests.services import extract_text_from_file
 from ocr_processing.models import OCRProcessing
 
 
@@ -194,11 +197,25 @@ def material_create(request):
     """Yangi material yaratish"""
     if request.method == 'POST':
         try:
+            from materials.models import MaterialCategory
+            
+            # Kategoriyani olish yoki yaratish
+            category_id = request.POST.get('category')
+            if category_id:
+                category = MaterialCategory.objects.get(id=category_id)
+            else:
+                # Agar kategoriya tanlanmagan bo'lsa, default kategoriya yaratamiz
+                category, created = MaterialCategory.objects.get_or_create(
+                    name='Umumiy',
+                    defaults={'description': 'Umumiy materiallar'}
+                )
+            
             # Material yaratish
             material = Material.objects.create(
                 title=request.POST.get('title'),
-                description=request.POST.get('description'),
+                description=request.POST.get('description', ''),
                 material_type=request.POST.get('material_type'),
+                category=category,
                 grade_level=request.POST.get('grade_level', ''),
                 tags=request.POST.get('tags', ''),
                 is_public=request.POST.get('is_public') == 'on',
@@ -211,19 +228,21 @@ def material_create(request):
                 material.thumbnail = request.FILES['thumbnail']
                 material.save()
             
-            return JsonResponse({
-                'success': True,
-                'message': 'Material muvaffaqiyatli yaratildi!',
-                'material_id': material.id
-            })
+            messages.success(request, 'Material muvaffaqiyatli yaratildi!')
+            return redirect('materials_list')
             
         except Exception as e:
-            return JsonResponse({
-                'success': False,
-                'error': f'Xatolik yuz berdi: {str(e)}'
-            })
+            messages.error(request, f'Xatolik yuz berdi: {str(e)}')
+            return render(request, 'materials/create.html')
     
-    return render(request, 'materials/create.html')
+    # Kategoriyalarni olish
+    from materials.models import MaterialCategory
+    categories = MaterialCategory.objects.all()
+    
+    context = {
+        'categories': categories,
+    }
+    return render(request, 'materials/create.html', context)
 
 
 @login_required
@@ -286,14 +305,25 @@ def test_create(request):
     """Yangi test yaratish"""
     if request.method == 'POST':
         try:
+            # Kategoriyani olish yoki yaratish
+            category_id = request.POST.get('category')
+            if category_id:
+                category = TestCategory.objects.get(id=category_id)
+            else:
+                # Agar kategoriya tanlanmagan bo'lsa, default kategoriya yaratamiz
+                category, created = TestCategory.objects.get_or_create(
+                    name='Umumiy',
+                    defaults={'description': 'Umumiy testlar'}
+                )
+            
             # Test yaratish
             test = Test.objects.create(
                 title=request.POST.get('title'),
                 description=request.POST.get('description', ''),
-                category_id=request.POST.get('category'),
-                subject=request.POST.get('subject'),
-                grade_level=request.POST.get('grade_level'),
-                difficulty=request.POST.get('difficulty'),
+                category=category,
+                subject=request.POST.get('subject', 'Umumiy'),
+                grade_level=request.POST.get('grade_level', 'Barcha sinflar'),
+                difficulty=request.POST.get('difficulty', 'medium'),
                 time_limit=int(request.POST.get('time_limit', 60)),
                 is_public=request.POST.get('is_public') == 'true',
                 author=request.user
@@ -342,7 +372,6 @@ def test_create(request):
             })
     
     # Kategoriyalarni olish
-    from tests.models import TestCategory
     categories = TestCategory.objects.all()
     
     context = {
@@ -796,3 +825,163 @@ def analyze_test_results(text):
         }
     
     return result
+
+
+@login_required
+def attestation_home(request):
+    """Davlat attestatsiyasiga tayyorgarlik bo'limi (landing)."""
+    # Kategoriya mavjud bo'lmasa yaratamiz
+    att_category, _ = TestCategory.objects.get_or_create(
+        name='Attestatsiya',
+        defaults={'description': 'Davlat attestatsiyasi uchun materiallar va testlar'}
+    )
+    # Statistika va tezkor amallar
+    total_att_tests = Test.objects.filter(category=att_category, is_active=True).count()
+    recent_att_tests = (
+        Test.objects.filter(category=att_category, is_active=True)
+        .order_by('-created_at')[:6]
+    )
+    context = {
+        'total_att_tests': total_att_tests,
+        'recent_att_tests': recent_att_tests,
+        'att_category': att_category,
+    }
+    return render(request, 'attestation/index.html', context)
+
+
+@login_required
+def attestation_practice(request):
+    """Attestatsiya bo'yicha amaliy testlar ro'yxati."""
+    att_category, _ = TestCategory.objects.get_or_create(
+        name='Attestatsiya',
+        defaults={'description': 'Davlat attestatsiyasi uchun materiallar va testlar'}
+    )
+    tests = (
+        Test.objects.filter(category=att_category, is_active=True)
+        .filter(Q(is_public=True) | Q(author=request.user))
+        .order_by('-created_at')
+    )
+    context = {
+        'tests': tests,
+        'att_category': att_category,
+    }
+    return render(request, 'attestation/practice.html', context)
+
+
+@login_required
+def attestation_materials(request):
+    """Admin uchun attestatsiya materiallarini yuklash va ko'rish."""
+    if not request.user.is_staff:
+        return redirect('attestation_home')
+
+    if request.method == 'POST':
+        try:
+            title = request.POST.get('title') or 'Attestatsiya materiali'
+            description = request.POST.get('description')
+            subject = request.POST.get('subject') or ''
+            grade_level = request.POST.get('grade_level') or ''
+            difficulty = request.POST.get('difficulty') or 'medium'
+            uploaded = request.FILES.get('file')
+            if not uploaded:
+                messages.error(request, 'Fayl yuklanmadi')
+                return redirect('attestation_materials')
+
+            # Fayl turini aniqlash
+            ext = (uploaded.name.split('.')[-1] or '').lower()
+            ext_map = {'png': 'image', 'jpg': 'image', 'jpeg': 'image', 'webp': 'image', 'docx': 'docx', 'pdf': 'pdf', 'txt': 'txt'}
+            source_type = ext_map.get(ext, 'txt')
+
+            material = AttestationMaterial.objects.create(
+                title=title,
+                description=description,
+                source_type=source_type,
+                file=uploaded,
+                subject=subject,
+                grade_level=grade_level,
+                difficulty=difficulty,
+                uploaded_by=request.user,
+            )
+
+            # Matnni ajratib olish
+            file_path = material.file.path
+            material.extracted_text = extract_text_from_file(file_path, source_type)
+            material.save()
+            messages.success(request, 'Material muvaffaqiyatli yuklandi va tahlil qilindi')
+            return redirect('attestation_materials')
+        except Exception as e:
+            messages.error(request, f'Xatolik: {str(e)}')
+            return redirect('attestation_materials')
+
+    materials = AttestationMaterial.objects.all()
+    return render(request, 'attestation/materials.html', {'materials': materials})
+
+
+@login_required
+def attestation_generate_from_material(request, material_id: int):
+    """Material asosida avtomatik test yaratish (Attestatsiya kategoriyasi)."""
+    if not request.user.is_staff:
+        return redirect('attestation_home')
+
+    try:
+        material = AttestationMaterial.objects.get(id=material_id)
+        context_text = material.extracted_text or ''
+        if not context_text:
+            messages.error(request, "Materialdan matn ajratib olinmadi")
+            return redirect('attestation_materials')
+
+        # AI orqali savollarni yaratish
+        ai = AITestGenerationService()
+        questions = ai.generate_from_context(
+            subject=material.subject or 'mathematics',
+            grade_level=material.grade_level or '9-sinf',
+            difficulty=material.difficulty or 'medium',
+            context_text=context_text,
+            num_questions=5,
+        )
+
+        # Kategoriya
+        category, _ = TestCategory.objects.get_or_create(name='Attestatsiya', defaults={'description': 'Davlat attestatsiyasi uchun testlar'})
+
+        # Test yaratish
+        test = Test.objects.create(
+            title=f"Attestatsiya: {material.title}",
+            description=(material.description or 'Attestatsiya materiali asosida avtomatik yaratilgan test'),
+            category=category,
+            subject=material.subject or 'mathematics',
+            grade_level=material.grade_level or '9-sinf',
+            difficulty=material.difficulty or 'medium',
+            time_limit=60,
+            is_public=False,
+            author=request.user,
+        )
+
+        # Savollarni yaratish
+        for idx, q in enumerate(questions or [], start=1):
+            question = Question.objects.create(
+                test=test,
+                question_text=q.get('question_text', ''),
+                question_type=q.get('question_type', 'single_choice'),
+                points=int(q.get('points', 1)),
+                order=idx,
+                explanation=q.get('explanation', ''),
+            )
+            for jdx, ans in enumerate(q.get('answers', []), start=1):
+                Answer.objects.create(
+                    question=question,
+                    answer_text=ans.get('answer_text', ''),
+                    is_correct=ans.get('is_correct', False),
+                    order=jdx,
+                )
+
+        test.total_questions = test.questions.count()
+        test.total_points = sum(q.points for q in test.questions.all())
+        test.save()
+
+        messages.success(request, 'Test muvaffaqiyatli yaratildi')
+        return redirect('attestation_practice')
+    except AttestationMaterial.DoesNotExist:
+        messages.error(request, 'Material topilmadi')
+        return redirect('attestation_materials')
+    except Exception as e:
+        messages.error(request, f'Xatolik: {str(e)}')
+        return redirect('attestation_materials')

@@ -11,21 +11,31 @@ class AITestGenerationService:
     
     def __init__(self):
         # Google Gemini API'ni sozlash
-        genai.configure(api_key=settings.GOOGLE_GEMINI_API_KEY)
-        self.model = genai.GenerativeModel('gemini-2.5-flash')
+        try:
+            genai.configure(api_key=settings.GOOGLE_GEMINI_API_KEY)
+            self.model = genai.GenerativeModel('gemini-pro')  # gemini-pro yoki gemini-1.5-pro
+        except Exception as e:
+            logger.error(f"Gemini API sozlashda xatolik: {e}")
+            self.model = None
     
     def generate_test_questions(self, subject, grade_level, difficulty, num_questions=5, language='uzbek'):
         """AI yordamida test savollarini yaratish"""
         try:
+            # Agar model mavjud bo'lmasa, mock data qaytarish
+            if not self.model:
+                logger.warning("Gemini model mavjud emas, mock data qaytarilmoqda")
+                return self._generate_mock_questions(subject, grade_level, difficulty, num_questions)
+            
             # Agar API key test bo'lsa, mock data qaytarish
-            if settings.GOOGLE_GEMINI_API_KEY == 'YOUR_API_KEY_HERE':
-                logger.warning("Test API key ishlatilmoqda, mock data qaytarilmoqda")
+            if settings.GOOGLE_GEMINI_API_KEY in ['YOUR_API_KEY_HERE', 'AIzaSyA7hPIidsVobpDQPGxPXb46yvEQhIMDzOo']:
+                logger.warning("Demo API key ishlatilmoqda, mock data qaytarilmoqda")
                 return self._generate_mock_questions(subject, grade_level, difficulty, num_questions)
             
             # Prompt yaratish
             prompt = self._create_prompt(subject, grade_level, difficulty, num_questions, language)
             
             # Gemini'ga so'rov yuborish
+            logger.info(f"Gemini'ga so'rov yuborilmoqda: {subject}, {grade_level}, {difficulty}")
             response = self.model.generate_content(prompt)
             response_text = response.text
             
@@ -41,6 +51,21 @@ class AITestGenerationService:
         except Exception as e:
             logger.error(f"AI test generation xatoligi: {e}")
             # Xatolik bo'lsa, mock data qaytarish
+            return self._generate_mock_questions(subject, grade_level, difficulty, num_questions)
+
+    def generate_from_context(self, subject, grade_level, difficulty, context_text, num_questions=5, language='uzbek'):
+        """Material konteksti (extracted text) asosida savollar yaratish."""
+        try:
+            if not self.model or settings.GOOGLE_GEMINI_API_KEY in ['YOUR_API_KEY_HERE', 'AIzaSyA7hPIidsVobpDQPGxPXb46yvEQhIMDzOo']:
+                # Mock fallback: kontekstdan mustaqil umumiy savollar
+                return self._generate_mock_questions(subject, grade_level, difficulty, num_questions)
+            prompt = self._create_prompt_with_context(subject, grade_level, difficulty, num_questions, context_text, language)
+            response = self.model.generate_content(prompt)
+            response_text = response.text
+            questions = self._parse_ai_response(response_text)
+            return questions or self._generate_mock_questions(subject, grade_level, difficulty, num_questions)
+        except Exception as e:
+            logger.error(f"generate_from_context xatoligi: {e}")
             return self._generate_mock_questions(subject, grade_level, difficulty, num_questions)
     
     def _create_prompt(self, subject, grade_level, difficulty, num_questions, language):
@@ -110,6 +135,11 @@ QO'SHIMCHA QOIDALAR:
 - {difficulty_text} darajadagi murakkablik"""
         
         return prompt
+
+    def _create_prompt_with_context(self, subject, grade_level, difficulty, num_questions, context_text, language):
+        base = self._create_prompt(subject, grade_level, difficulty, num_questions, language)
+        context_note = "\n\nKONTEKST (faqat quyidagi mavzu/material asosida savol tuzing, boshqa mavzuga o'tmang):\n" + context_text[:6000]
+        return base + context_note
     
     def _parse_ai_response(self, response_text):
         """AI javobini parse qilish - yaxshilangan"""

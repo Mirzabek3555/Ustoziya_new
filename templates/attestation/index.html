@@ -1,0 +1,86 @@
+{% extends 'base.html' %}
+
+{% block title %}Attestatsiya tayyorgarlik{% endblock %}
+{% block page_title %}Attestatsiya{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title mb-3">
+                    <i class="fas fa-graduation-cap me-2"></i>
+                    Davlat attestatsiyasiga tayyorgarlik bo'limi
+                </h5>
+                <p class="text-muted mb-0">
+                    Bu bo'limda attestatsiya uchun nazariy materiallar, amaliy testlar va AI/OCR asosida
+                    natijalarni tahlil qilish imkoniyatlari jamlangan.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-2"><i class="fas fa-tasks me-2"></i>Amaliy testlar</h6>
+                <p class="text-muted">Attestatsiya bo'yicha tuzilgan testlar ro'yxati ({{ total_att_tests }} ta).</p>
+                <a href="{% url 'attestation_practice' %}" class="btn btn-primary w-100">Ro'yxatni ko'rish</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-2"><i class="fas fa-plus me-2"></i>Yangi attestatsiya testi</h6>
+                <p class="text-muted">Yangi test yarating va kategoriyada "Attestatsiya" ni tanlang.</p>
+                <a href="{% url 'test_create' %}" class="btn btn-success w-100">Test yaratish</a>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-4 mb-3">
+        <div class="card h-100">
+            <div class="card-body">
+                <h6 class="mb-2"><i class="fas fa-chart-line me-2"></i>AI/OCR tahlil</h6>
+                <p class="text-muted">Javob varaqalarini yuklab natijalarni avtomatik tahlil qiling.</p>
+                <a href="{% url 'test_analysis' %}" class="btn btn-info w-100">Tahlil sahifasi</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% if recent_att_tests %}
+<div class="row mt-2">
+    <div class="col-12">
+        <div class="card">
+            <div class="card-header">
+                <h6 class="mb-0"><i class="fas fa-clock me-2"></i>Yaqinda qo'shilgan testlar</h6>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    {% for test in recent_att_tests %}
+                    <div class="col-md-4 mb-3">
+                        <div class="border rounded p-3 h-100">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <strong>{{ test.title }}</strong>
+                                <span class="badge bg-secondary">{{ test.get_difficulty_display }}</span>
+                            </div>
+                            <div class="small text-muted mt-1">{{ test.subject }} • {{ test.grade_level }} • {{ test.time_limit }} daqiqa</div>
+                            <div class="mt-2 d-flex gap-2">
+                                <a href="{% url 'attestation_practice' %}" class="btn btn-outline-primary btn-sm">Amaliyot</a>
+                                <a href="{% url 'export_test_to_word' %}?test_id={{ test.id }}" target="_blank" class="btn btn-outline-secondary btn-sm">Word</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}
+
+

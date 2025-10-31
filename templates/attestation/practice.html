@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+
+{% block title %}Attestatsiya — Amaliy testlar{% endblock %}
+{% block page_title %}Attestatsiya — Amaliy testlar{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-12 d-flex justify-content-between align-items-center">
+        <div class="d-flex align-items-center gap-2">
+            <i class="fas fa-tasks"></i>
+            <strong>Testlar ro'yxati</strong>
+        </div>
+        <div>
+            <a href="{% url 'attestation_home' %}" class="btn btn-outline-secondary me-2">Bo'limga qaytish</a>
+            <a href="{% url 'test_create' %}" class="btn btn-success">Yangi attestatsiya testi</a>
+        </div>
+    </div>
+    <div class="col-12">
+        <div class="card mt-3">
+            <div class="card-body">
+                {% if tests %}
+                <div class="row">
+                    {% for test in tests %}
+                    <div class="col-md-6 col-lg-4 mb-3">
+                        <div class="card h-100">
+                            <div class="card-body">
+                                <h6 class="card-title mb-1">{{ test.title }}</h6>
+                                <div class="small text-muted">{{ test.subject }} • {{ test.grade_level }} • {{ test.time_limit }} daqiqa</div>
+                                <div class="mt-2 d-flex justify-content-between align-items-center">
+                                    <span class="badge bg-info">{{ test.get_difficulty_display }}</span>
+                                    <small class="text-muted">{{ test.total_questions }} savol</small>
+                                </div>
+                            </div>
+                            <div class="card-footer d-flex gap-2">
+                                <a href="{% url 'export_test_to_word' %}?test_id={{ test.id }}" target="_blank" class="btn btn-sm btn-outline-primary">Word</a>
+                                <a href="{% url 'tests_list' %}" class="btn btn-sm btn-outline-secondary">Barcha testlar</a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-5">
+                    <i class="fas fa-info-circle fa-2x text-muted mb-2"></i>
+                    <p class="text-muted mb-2">Hozircha attestatsiya uchun testlar yo'q.</p>
+                    <a href="{% url 'test_create' %}" class="btn btn-primary">Yangi test yaratish</a>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+

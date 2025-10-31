@@ -1,4 +1,6 @@
 Django==4.2.7
+python-docx==1.1.2
+PyPDF2==3.0.1
 Pillow==10.1.0
 django-cors-headers==4.3.1
 djangorestframework==3.14.0
