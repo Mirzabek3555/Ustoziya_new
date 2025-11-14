@@ -12,16 +12,25 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
+from decouple import config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+# Default environment fallbacks (dev only)
+os.environ.setdefault('GOOGLE_GEMINI_API_KEY', 'AIzaSyBvR1ZG4FInUuctIpsiUCy-eCEeNbj6nUU')
+os.environ.setdefault('GOOGLE_GEMINI_MODEL', 'gemini-1.5-flash')
+os.environ.setdefault(
+    'OPENROUTER_API_KEY',
+    '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',
+)
 
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-@cm@ci$le3d%o_0rs%4xm1+c4by)i3hpc1d6i9ivo6dq_(0512'
+SECRET_KEY = config('DJANGO_SECRET_KEY', default='django-insecure-@cm@ci$le3d%o_0rs%4xm1+c4by)i3hpc1d6i9ivo6dq_(0512')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -164,15 +173,22 @@ LOGOUT_REDIRECT_URL = '/'
 TESSERACT_PATH = r'C:\Program Files\Tesseract-OCR\tesseract.exe'
 
 # Google Cloud Vision API settings
-GOOGLE_API_KEY = 'AlzaSyA7hPlidsVobpDQPGxPXb46yvEQhIMDzOo'
-GOOGLE_PROJECT_ID = 'projects/980339613237'
-GOOGLE_PROJECT_NUMBER = '980339613237'
+GOOGLE_API_KEY = config('GOOGLE_API_KEY', default='')
+GOOGLE_PROJECT_ID = config('GOOGLE_PROJECT_ID', default='projects/980339613237')
+GOOGLE_PROJECT_NUMBER = config('GOOGLE_PROJECT_NUMBER', default='980339613237')
 
 # Google Gemini AI API settings
-GOOGLE_GEMINI_API_KEY = os.environ.get('GOOGLE_GEMINI_API_KEY', 'AIzaSyA7hPIidsVobpDQPGxPXb46yvEQhIMDzOo')
+GOOGLE_GEMINI_API_KEY = config('GOOGLE_GEMINI_API_KEY', default='')
+GOOGLE_GEMINI_MODEL = config('GOOGLE_GEMINI_MODEL', default='models/gemini-1.5-flash-latest')
+
+# OpenAI API settings
+OPENAI_API_KEY = config('OPENAI_API_KEY', default='')
+OPENAI_CHAT_MODEL = config('OPENAI_CHAT_MODEL', default='gpt-4o-mini')
+OPENAI_IMAGE_MODEL = config('OPENAI_IMAGE_MODEL', default='gpt-image-1')
 
 # OpenRouter AI API settings (eski - o'chirilishi mumkin)
-OPENROUTER_API_KEY = 'sk-or-v1-1234567890abcdef'  # Bepul OpenRouter API key - haqiqiy key kerak
-OPENROUTER_BASE_URL = 'https://openrouter.ai/api/v1'
-OPENROUTER_SITE_URL = 'http://127.0.0.1:8000'
-OPENROUTER_SITE_NAME = 'Ustoziya Platformasi'  # Windows uchun
+OPENROUTER_API_KEY = config('OPENROUTER_API_KEY', default='')
+OPENROUTER_BASE_URL = config('OPENROUTER_BASE_URL', default='https://openrouter.ai/api/v1')
+OPENROUTER_SITE_URL = config('OPENROUTER_SITE_URL', default='http://127.0.0.1:8000')
+OPENROUTER_SITE_NAME = config('OPENROUTER_SITE_NAME', default='Ustoziya Platformasi')  # Windows uchun
+OPENROUTER_MODEL = config('OPENROUTER_MODEL', default='openrouter/meta/llama-3.1-8b-instruct')

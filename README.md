@@ -108,9 +108,25 @@ python manage.py runserver
 `.env` fayl yarating va quyidagi o'zgaruvchilarni qo'shing:
 
 ```env
-SECRET_KEY=your-secret-key
+DJANGO_SECRET_KEY=your-secret-key
 DEBUG=True
+
+# OpenAI
+OPENAI_API_KEY=your-openai-key
+OPENAI_CHAT_MODEL=gpt-4o-mini        # ixtiyoriy, default shu
+OPENAI_IMAGE_MODEL=gpt-image-1       # ixtiyoriy
+
+# Google Gemini
 GOOGLE_GEMINI_API_KEY=your-gemini-api-key
+GOOGLE_GEMINI_MODEL=models/gemini-1.5-flash-latest  # ixtiyoriy
+
+# OpenRouter
+OPENROUTER_API_KEY=your-openrouter-key          # talab qilinadi, agar OpenRouter ishlatilsa
+OPENROUTER_MODEL=openrouter/openai/gpt-4o-mini  # ixtiyoriy
+OPENROUTER_SITE_URL=http://127.0.0.1:8000       # OpenRouter statistikasi uchun
+OPENROUTER_SITE_NAME=Ustoziya Platformasi      # OpenRouter statistikasi uchun
+
+# Boshqa servislar
 GOOGLE_API_KEY=your-google-api-key
 GOOGLE_PROJECT_ID=your-project-id
 TESSERACT_PATH=/path/to/tesseract

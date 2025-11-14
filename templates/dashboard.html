@@ -1,5 +1,88 @@
 {% extends 'base.html' %}
 
+{% block extra_css %}
+{{ block.super }}
+<style>
+    .material-options-modal .modal-content {
+        border-radius: 20px;
+        border: none;
+    }
+
+    .material-options-modal .modal-header {
+        border-bottom: none;
+    }
+
+    .material-options-modal .modal-footer {
+        border-top: none;
+    }
+
+    .material-options-modal .material-option {
+        text-decoration: none;
+    }
+
+    .material-options-modal .material-option-card {
+        border-radius: 18px;
+        color: #ffffff;
+        height: 100%;
+        padding: 24px;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.12);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .material-options-modal .material-option-card:hover {
+        transform: translateY(-6px);
+        box-shadow: 0 18px 36px rgba(0, 0, 0, 0.18);
+    }
+
+    .material-options-modal .material-icon {
+        font-size: 2.5rem;
+        display: inline-flex;
+        width: 58px;
+        height: 58px;
+        align-items: center;
+        justify-content: center;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.18);
+        margin-bottom: 18px;
+    }
+
+    .material-options-modal .material-option-card .card-title {
+        font-weight: 700;
+        margin-bottom: 12px;
+    }
+
+    .material-options-modal .material-option-card .card-text {
+        color: rgba(255, 255, 255, 0.85);
+        margin-bottom: 0;
+    }
+
+    .material-option-card--presentation {
+        background: linear-gradient(135deg, #ff9f43, #ff6f20);
+    }
+
+    .material-option-card--interactive {
+        background: linear-gradient(135deg, #1abc9c, #109177);
+    }
+
+    .material-option-card--image {
+        background: linear-gradient(135deg, #3498db, #2c82c9);
+    }
+
+    .material-option-card--resources {
+        background: linear-gradient(135deg, #f6d365, #fda085);
+        color: #2c3e50;
+    }
+
+    .material-option-card--resources .material-icon {
+        background: rgba(255, 255, 255, 0.35);
+    }
+
+    .material-option-card--resources .card-text {
+        color: rgba(44, 62, 80, 0.75);
+    }
+</style>
+{% endblock %}
+
 {% block title %}Dashboard - Ustoziya Platformasi{% endblock %}
 {% block page_title %}Dashboard{% endblock %}
 
@@ -92,10 +175,10 @@
             <div class="card-body">
                 <div class="row">
                     <div class="col-md-4 mb-3">
-                        <a href="{% url 'material_create' %}" class="btn btn-primary w-100">
+                        <button type="button" class="btn btn-primary w-100" data-bs-toggle="modal" data-bs-target="#newMaterialModal">
                             <i class="fas fa-plus me-2"></i>
                             Yangi Material
-                        </a>
+                        </button>
                     </div>
                     <div class="col-md-4 mb-3">
                         <a href="{% url 'test_create_page' %}" class="btn btn-success w-100">
@@ -223,6 +306,64 @@
                 {% else %}
                     <p class="text-muted">Hozircha testlar yo'q</p>
                 {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Yangi Material modal oynasi -->
+<div class="modal fade material-options-modal" id="newMaterialModal" tabindex="-1" aria-labelledby="newMaterialModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header d-flex justify-content-between align-items-start">
+                <div>
+                    <h5 class="modal-title fw-semibold" id="newMaterialModalLabel">Material yo'nalishini tanlang</h5>
+                    <p class="text-muted mb-0">O'zingiz yaratmoqchi bo'lgan material turiga mos yo'nalishni tanlang.</p>
+                </div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Yopish"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <a href="{% url 'materials:presentation' %}" class="material-option d-block">
+                            <div class="card material-option-card material-option-card--presentation">
+                                <div class="material-icon">🧾</div>
+                                <h5 class="card-title">Taqdimot tayyorlash</h5>
+                                <p class="card-text">Slaydlar, struktura va vizual elementlar bo'yicha tavsiyalarni o'rganing.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'materials:interactive' %}" class="material-option d-block">
+                            <div class="card material-option-card material-option-card--interactive">
+                                <div class="material-icon">🧠</div>
+                                <h5 class="card-title">Interaktiv metodlar</h5>
+                                <p class="card-text">O'quvchilarni jalb etuvchi mashg'ulot va faol metodlar to'plami.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'materials:image' %}" class="material-option d-block">
+                            <div class="card material-option-card material-option-card--image">
+                                <div class="material-icon">🖼️</div>
+                                <h5 class="card-title">Rasm tayyorlash</h5>
+                                <p class="card-text">Vizual materiallar, infografika va ta'limiy tasvirlar yaratish bo'yicha yo'riqnoma.</p>
+                            </div>
+                        </a>
+                    </div>
+                    <div class="col-md-6">
+                        <a href="{% url 'materials:resources' %}" class="material-option d-block">
+                            <div class="card material-option-card material-option-card--resources">
+                                <div class="material-icon">📚</div>
+                                <h5 class="card-title">Qo'shimcha o'quv manbalari</h5>
+                                <p class="card-text">Kitoblar, maqolalar va raqamli manbalar ro'yxati bilan tanishing.</p>
+                            </div>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-light" data-bs-dismiss="modal">Yopish</button>
             </div>
         </div>
     </div>

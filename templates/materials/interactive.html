@@ -1,0 +1,144 @@
+{% extends 'base.html' %}
+
+{% block title %}AI interaktiv metodlar - Ustoziya{% endblock %}
+{% block page_title %}{{ hero.emoji }} {{ hero.title }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ai-hero-card {
+        border-radius: 24px;
+        border: none;
+        background: linear-gradient(135deg, #1abc9c, #109177);
+        color: #fff;
+        box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
+    }
+
+    .ai-provider-option .form-check-input {
+        display: none;
+    }
+
+    .ai-provider-option .form-check-label {
+        display: block;
+        padding: 12px 18px;
+        border-radius: 16px;
+        border: 2px solid transparent;
+        background: #f3f4f6;
+        color: #1f2d3d;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+
+    .ai-provider-option .form-check-input:checked + .form-check-label {
+        background: linear-gradient(135deg, #1abc9c, #109177);
+        color: #fff;
+        border-color: rgba(255, 255, 255, 0.35);
+        box-shadow: 0 10px 20px rgba(26, 188, 156, 0.25);
+    }
+
+    .ai-result-box {
+        background: #f8fdfb;
+        border-radius: 18px;
+        padding: 24px;
+        white-space: pre-wrap;
+        line-height: 1.7;
+        border: 1px solid #d9f3eb;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-xl-9 col-lg-10">
+        <div class="card ai-hero-card mb-4">
+            <div class="card-body p-4 p-lg-5">
+                <h3 class="fw-bold mb-3">{{ hero.subtitle }}</h3>
+                <p class="lead mb-4">
+                    Fan, mavzu yoki yosh toifasini yozing — AI esa talabalar faolligini oshiruvchi interaktiv metod
+                    bilan javob beradi. Bosqichma-bosqich rejani darhol sinfingizga moslashtirishingiz mumkin.
+                </p>
+                <div class="d-flex flex-wrap gap-3">
+                    <span class="badge bg-light text-dark px-3 py-2 rounded-pill">🤝 Guruh ishlari</span>
+                    <span class="badge bg-light text-dark px-3 py-2 rounded-pill">🎲 Gamifikatsiya</span>
+                    <span class="badge bg-light text-dark px-3 py-2 rounded-pill">📝 Refleksiya savollari</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-body p-4 p-lg-5">
+                <form method="post" novalidate>
+                    {% csrf_token %}
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold text-uppercase small text-muted">Sun'iy intellekt modeli</label>
+                        <div class="row g-3">
+                            <div class="col-md-6 col-lg-4">
+                                <div class="form-check ai-provider-option">
+                                    <input class="form-check-input" type="radio" name="provider" id="provider-openai" value="openai" {% if selected_provider == 'openai' %}checked{% endif %}>
+                                    <label class="form-check-label" for="provider-openai">
+                                        <i class="fa-solid fa-robot me-2"></i> OpenAI GPT-4o
+                                        <span class="d-block small mt-1 opacity-75">Qisqa, aniq va bosqichli metod ssenariysi.</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="form-check ai-provider-option">
+                                    <input class="form-check-input" type="radio" name="provider" id="provider-gemini" value="gemini" {% if selected_provider == 'gemini' %}checked{% endif %}>
+                                    <label class="form-check-label" for="provider-gemini">
+                                        <i class="fa-solid fa-star me-2"></i> Google Gemini 1.5
+                                        <span class="d-block small mt-1 opacity-75">Kengroq tavsiyalar, moslashuvchan topshiriqlar va qo'shimcha resurslar.</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6 col-lg-4">
+                                <div class="form-check ai-provider-option">
+                                    <input class="form-check-input" type="radio" name="provider" id="provider-openrouter" value="openrouter" {% if selected_provider == 'openrouter' %}checked{% endif %}>
+                                    <label class="form-check-label" for="provider-openrouter">
+                                        <i class="fa-solid fa-cloud-meatball me-2"></i> OpenRouter GPT-4o-mini
+                                        <span class="d-block small mt-1 opacity-75">Moslashuvchan narxlar va modellar kombinatsiyasi.</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        <label for="prompt" class="form-label fw-semibold">Mavzu, sinf yoki maqsad</label>
+                        <textarea class="form-control form-control-lg" id="prompt" name="prompt" rows="5" placeholder="Masalan: 8-sinf algebra darsi uchun foizlarga oid amaliy mashg'ulot tayyorlash" required>{{ prompt_value }}</textarea>
+                        <div class="form-text">O'quvchilar soni, davomiylik yoki mavjud resurslarni ham ko'rsatishingiz mumkin.</div>
+                    </div>
+
+                    <div class="d-flex justify-content-between align-items-center">
+                        <small class="text-muted">API kalitlari .env faylida to'g'ri kiritilgan bo'lishi kerak.</small>
+                        <button type="submit" class="btn btn-success btn-lg px-4">
+                            <i class="fas fa-bolt me-2"></i> Metod yaratish
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        {% if error %}
+        <div class="alert alert-danger border-0 shadow-sm">{{ error }}</div>
+        {% endif %}
+
+        {% if result %}
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center bg-white border-0">
+                <div>
+                    <h5 class="mb-0 fw-semibold">AI tavsiya etgan interaktiv metod</h5>
+                    <small class="text-muted">Model: {{ provider_label }}</small>
+                </div>
+                <a href="{% url 'material_create' %}" class="btn btn-outline-success btn-sm">
+                    <i class="fas fa-share me-1"></i> Rejani materialga aylantirish
+                </a>
+            </div>
+            <div class="card-body">
+                <div class="ai-result-box">{{ result|linebreaksbr }}</div>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
+
