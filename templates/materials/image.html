@@ -13,29 +13,6 @@
         box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
     }
 
-    .ai-provider-option .form-check-input {
-        display: none;
-    }
-
-    .ai-provider-option .form-check-label {
-        display: block;
-        padding: 12px 18px;
-        border-radius: 16px;
-        border: 2px solid transparent;
-        background: #f3f6fb;
-        color: #1f2d3d;
-        font-weight: 600;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-
-    .ai-provider-option .form-check-input:checked + .form-check-label {
-        background: linear-gradient(135deg, #3498db, #2c82c9);
-        color: #fff;
-        border-color: rgba(255, 255, 255, 0.35);
-        box-shadow: 0 10px 20px rgba(52, 152, 219, 0.25);
-    }
-
     .ai-result-image {
         border-radius: 18px;
         border: 1px solid #e3e8ef;
@@ -61,8 +38,8 @@
             <div class="card-body p-4 p-lg-5">
                 <h3 class="fw-bold mb-3">{{ hero.subtitle }}</h3>
                 <p class="lead mb-4">
-                    Tasvirni ta'riflang — OpenAI modeli bevosita rasmni yaratadi, Gemini esa dizayn bo'yicha
-                    izchil tavsiyalarni taqdim etadi. Vizual materiallarni tez tayyorlab, darslaringizni boyiting.
+                    Tasvirni ta'riflang — {{ provider_label }} siz uchun rasm yoki batafsil dizayn yo'riqnomasi
+                    yaratadi. Vizual materiallarni tez tayyorlab, darslaringizni boyiting.
                 </p>
                 <div class="d-flex flex-wrap gap-3">
                     <span class="badge bg-light text-dark px-3 py-2 rounded-pill">🖼️ Tasvir generatsiyasi</span>
@@ -77,25 +54,11 @@
                 <form method="post" novalidate>
                     {% csrf_token %}
                     <div class="mb-4">
-                        <label class="form-label fw-semibold text-uppercase small text-muted">Sun'iy intellekt modeli</label>
-                        <div class="row g-3">
-                            <div class="col-md-6">
-                                <div class="form-check ai-provider-option">
-                                    <input class="form-check-input" type="radio" name="provider" id="provider-openai" value="openai" {% if selected_provider == 'openai' %}checked{% endif %}>
-                                    <label class="form-check-label" for="provider-openai">
-                                        <i class="fa-solid fa-robot me-2"></i> OpenAI GPT-4o Image
-                                        <span class="d-block small mt-1 opacity-75">To'g'ridan-to'g'ri PNG formatdagi rasm yaratadi.</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6">
-                                <div class="form-check ai-provider-option">
-                                    <input class="form-check-input" type="radio" name="provider" id="provider-gemini" value="gemini" {% if selected_provider == 'gemini' %}checked{% endif %}>
-                                    <label class="form-check-label" for="provider-gemini">
-                                        <i class="fa-solid fa-star me-2"></i> Google Gemini 1.5
-                                        <span class="d-block small mt-1 opacity-75">Grafik dizayn uchun batafsil matnli yo'riqnoma beradi.</span>
-                                    </label>
-                                </div>
+                        <div class="alert alert-info d-flex align-items-center gap-3 mb-0">
+                            <i class="fa-solid fa-plug fa-lg text-info"></i>
+                            <div>
+                                <div class="fw-semibold text-dark">Faol model: {{ provider_label }}</div>
+                                <div class="small text-muted">API kaliti avtomatik ravishda tanlandi.</div>
                             </div>
                         </div>
                     </div>
@@ -135,7 +98,7 @@
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
                 <div>
-                    <h5 class="mb-0 fw-semibold">OpenAI generatsiya qilgan rasm</h5>
+                    <h5 class="mb-0 fw-semibold">{{ provider_label }} natijasi</h5>
                     <small class="text-muted">Model: {{ provider_label }} – o'lcham {{ size }}</small>
                 </div>
                 <a href="{{ image_data_url }}" download="ustoziya-ai-image.png" class="btn btn-outline-info btn-sm">
@@ -151,7 +114,7 @@
         {% if description %}
         <div class="card border-0 shadow-sm mb-4">
             <div class="card-header bg-white border-0">
-                <h5 class="mb-0 fw-semibold">Gemini tavsiya etgan dizayn yo'riqnomasi</h5>
+                <h5 class="mb-0 fw-semibold">{{ provider_label }} tavsiya etgan dizayn yo'riqnomasi</h5>
                 <small class="text-muted">Model: {{ provider_label }}</small>
             </div>
             <div class="card-body">

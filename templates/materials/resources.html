@@ -13,29 +13,6 @@
         box-shadow: 0 14px 36px rgba(0, 0, 0, 0.16);
     }
 
-    .ai-provider-option .form-check-input {
-        display: none;
-    }
-
-    .ai-provider-option .form-check-label {
-        display: block;
-        padding: 12px 18px;
-        border-radius: 16px;
-        border: 2px solid transparent;
-        background: #fff1d6;
-        color: #2c3e50;
-        font-weight: 600;
-        transition: all 0.2s ease;
-        cursor: pointer;
-    }
-
-    .ai-provider-option .form-check-input:checked + .form-check-label {
-        background: linear-gradient(135deg, #f0932b, #f6d365);
-        color: #2c3e50;
-        border-color: rgba(255, 255, 255, 0.35);
-        box-shadow: 0 10px 20px rgba(240, 147, 43, 0.3);
-    }
-
     .ai-result-box {
         background: #fffaf0;
         border-radius: 18px;
@@ -70,34 +47,11 @@
                 <form method="post" novalidate>
                     {% csrf_token %}
                     <div class="mb-4">
-                        <label class="form-label fw-semibold text-uppercase small text-muted">Sun'iy intellekt modeli</label>
-                        <div class="row g-3">
-                            <div class="col-md-6 col-lg-4">
-                                <div class="form-check ai-provider-option">
-                                    <input class="form-check-input" type="radio" name="provider" id="provider-openai" value="openai" {% if selected_provider == 'openai' %}checked{% endif %}>
-                                    <label class="form-check-label" for="provider-openai">
-                                        <i class="fa-solid fa-robot me-2"></i> OpenAI GPT-4o
-                                        <span class="d-block small mt-1 opacity-75">Qisqa, strukturalangan resurslar ro'yxati.</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="form-check ai-provider-option">
-                                    <input class="form-check-input" type="radio" name="provider" id="provider-gemini" value="gemini" {% if selected_provider == 'gemini' %}checked{% endif %}>
-                                    <label class="form-check-label" for="provider-gemini">
-                                        <i class="fa-solid fa-star me-2"></i> Google Gemini 1.5
-                                        <span class="d-block small mt-1 opacity-75">Kengroq tavsif va differensiallashgan tavsiyalar.</span>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="form-check ai-provider-option">
-                                    <input class="form-check-input" type="radio" name="provider" id="provider-openrouter" value="openrouter" {% if selected_provider == 'openrouter' %}checked{% endif %}>
-                                    <label class="form-check-label" for="provider-openrouter">
-                                        <i class="fa-solid fa-cloud-meatball me-2"></i> OpenRouter GPT-4o-mini
-                                        <span class="d-block small mt-1 opacity-75">Aralash modellardan foydalangan keng qamrovli g'oyalar.</span>
-                                    </label>
-                                </div>
+                        <div class="alert alert-warning d-flex align-items-center gap-3 mb-0">
+                            <i class="fa-solid fa-plug fa-lg text-warning"></i>
+                            <div>
+                                <div class="fw-semibold text-dark">Faol model: {{ provider_label }}</div>
+                                <div class="small text-muted">API kaliti avtomatik ravishda tanlandi.</div>
                             </div>
                         </div>
                     </div>

@@ -28,6 +28,40 @@ except ImportError:  # pragma: no cover - optional dependency
 
 logger = logging.getLogger(__name__)
 
+
+TEXT_PROVIDER_LABELS = {
+    'openai': "OpenAI GPT-4o",
+    'gemini': "Google Gemini 1.5",
+    'openrouter': "OpenRouter LLaMA 3.1 8B",
+}
+
+IMAGE_PROVIDER_LABELS = {
+    'openai': "OpenAI GPT-4o tasvir modeli",
+    'gemini': "Google Gemini 1.5",
+}
+
+
+def _resolve_text_provider() -> str:
+    if getattr(settings, 'OPENAI_API_KEY', ''):
+        return 'openai'
+    if getattr(settings, 'GOOGLE_GEMINI_API_KEY', ''):
+        return 'gemini'
+    if getattr(settings, 'OPENROUTER_API_KEY', ''):
+        return 'openrouter'
+    raise ValueError("Hech qanday matnli AI API kaliti topilmadi. Iltimos, .env faylini tekshiring.")
+
+
+def _resolve_image_provider() -> str:
+    if getattr(settings, 'OPENAI_API_KEY', ''):
+        return 'openai'
+    if getattr(settings, 'GOOGLE_GEMINI_API_KEY', ''):
+        return 'gemini'
+    raise ValueError("Tasvir yaratish uchun OpenAI yoki Google Gemini API kaliti talab qilinadi.")
+
+
+def _get_provider_label(provider: str, mapping: dict[str, str]) -> str:
+    return mapping.get(provider, provider.title())
+
 from .models import (
     Material, MaterialCategory, MaterialRating, MaterialDownload,
     Assignment, StudentSubmission, VideoLesson, Model3D
@@ -837,30 +871,31 @@ def material_ai_categories(request):
 
 
 def _process_text_generation(request, *, template_name: str, system_prompt: str, hero: dict, temperature: float = 0.7):
-    default_provider = 'openai'
-    if getattr(settings, 'OPENROUTER_API_KEY', ''):
-        default_provider = 'openrouter'
-    provider_labels = {
-        'openai': 'OpenAI GPT-4o',
-        'gemini': 'Google Gemini',
-        'openrouter': 'OpenRouter LLaMA 3.1 8B',
-    }
+    try:
+        default_provider = _resolve_text_provider()
+    except ValueError as exc:
+        context = {
+            'hero': hero,
+            'prompt_value': '',
+            'provider_label': "API kaliti topilmadi",
+            'error': str(exc),
+        }
+        return render(request, template_name, context)
+
     context = {
         'hero': hero,
-        'selected_provider': default_provider,
         'prompt_value': '',
-        'provider_label': provider_labels.get(default_provider, default_provider.title()),
+        'provider_label': _get_provider_label(default_provider, TEXT_PROVIDER_LABELS),
     }
 
     if request.method == 'POST':
         prompt = request.POST.get('prompt', '').strip()
-        provider = request.POST.get('provider', default_provider)
+        provider = default_provider
 
         export_ppt = request.POST.get('export_ppt') == '1'
         existing_result = request.POST.get('existing_result', '').strip()
 
         context['prompt_value'] = prompt
-        context['selected_provider'] = provider
 
         if not prompt:
             context['error'] = "Iltimos, so'rov matnini kiriting."
@@ -889,7 +924,7 @@ def _process_text_generation(request, *, template_name: str, system_prompt: str,
                     context['error'] = str(exc)
 
         if 'result' in context:
-            context['provider_label'] = provider_labels.get(provider, provider.title())
+            context['provider_label'] = _get_provider_label(provider, TEXT_PROVIDER_LABELS)
 
     return render(request, template_name, context)
 
@@ -968,24 +1003,36 @@ def material_image_view(request):
         'subtitle': "Tasvirni tasvirlab bering – AI uni generatsiya qiladi yoki dizayn tavsiyasi beradi.",
     }
     allowed_sizes = ['512x512', '768x768', '1024x1024']
+    try:
+        provider = _resolve_image_provider()
+    except ValueError as exc:
+        context = {
+            'hero': hero,
+            'prompt_value': '',
+            'size': '1024x1024',
+            'allowed_sizes': allowed_sizes,
+            'provider_label': "API kaliti topilmadi",
+            'error': str(exc),
+        }
+        return render(request, 'materials/image.html', context)
+
     context = {
         'hero': hero,
-        'selected_provider': 'openai',
         'prompt_value': '',
         'size': '1024x1024',
         'allowed_sizes': allowed_sizes,
+        'provider_label': _get_provider_label(provider, IMAGE_PROVIDER_LABELS),
+        'selected_provider': provider,
     }
 
     if request.method == 'POST':
         prompt = request.POST.get('prompt', '').strip()
-        provider = request.POST.get('provider', 'openai')
         size = request.POST.get('size', '1024x1024')
 
         if size not in allowed_sizes:
             size = '1024x1024'
 
         context['prompt_value'] = prompt
-        context['selected_provider'] = provider
         context['size'] = size
 
         if not prompt:
@@ -995,9 +1042,9 @@ def material_image_view(request):
                 context.pop('image_data_url', None)
                 context.pop('image_base64', None)
                 context.pop('description', None)
-                result = _generate_ai_image(provider, prompt, size)
+                result = _generate_ai_image(context['selected_provider'], prompt, size)
                 context.update(result)
-                context['provider_label'] = 'OpenAI GPT-4o tasvir modeli' if provider == 'openai' else 'Google Gemini'
+                context['provider_label'] = _get_provider_label(context['selected_provider'], IMAGE_PROVIDER_LABELS)
                 if 'image_base64' in result:
                     context['image_data_url'] = f"data:image/png;base64,{result['image_base64']}"
             except ValueError as exc:
