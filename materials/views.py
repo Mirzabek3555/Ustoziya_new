@@ -31,8 +31,8 @@ logger = logging.getLogger(__name__)
 
 TEXT_PROVIDER_LABELS = {
     'openai': "OpenAI GPT-4o",
+    'openrouter': "OpenRouter GPT-4o",
     'gemini': "Google Gemini 1.5",
-    'openrouter': "OpenRouter LLaMA 3.1 8B",
 }
 
 IMAGE_PROVIDER_LABELS = {
@@ -44,10 +44,10 @@ IMAGE_PROVIDER_LABELS = {
 def _resolve_text_provider() -> str:
     if getattr(settings, 'OPENAI_API_KEY', ''):
         return 'openai'
-    if getattr(settings, 'GOOGLE_GEMINI_API_KEY', ''):
-        return 'gemini'
     if getattr(settings, 'OPENROUTER_API_KEY', ''):
         return 'openrouter'
+    if getattr(settings, 'GOOGLE_GEMINI_API_KEY', ''):
+        return 'gemini'
     raise ValueError("Hech qanday matnli AI API kaliti topilmadi. Iltimos, .env faylini tekshiring.")
 
 
@@ -621,11 +621,11 @@ def _generate_openrouter_chat(system_prompt: str, user_prompt: str, temperature:
     }
     if normalized in deprecated_models or 'gpt-4o-mini' in normalized:
         logger.warning(
-            "Deprecated OpenRouter modeli \"%s\" aniqlangan. Fallback sifatida `openrouter/meta/llama-3.1-8b-instruct` ishlatiladi. "
+            "Deprecated OpenRouter modeli \"%s\" aniqlangan. Fallback sifatida `openai/gpt-4o` ishlatiladi. "
             "Iltimos, .env faylida OPENROUTER_MODEL qiymatini yangilang.",
             configured_model,
         )
-        model_name = 'openrouter/meta/llama-3.1-8b-instruct'
+        model_name = 'openai/gpt-4o'
     else:
         model_name = configured_model
     try:

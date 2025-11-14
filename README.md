@@ -122,7 +122,7 @@ GOOGLE_GEMINI_MODEL=models/gemini-1.5-flash-latest  # ixtiyoriy
 
 # OpenRouter
 OPENROUTER_API_KEY=your-openrouter-key          # talab qilinadi, agar OpenRouter ishlatilsa
-OPENROUTER_MODEL=openrouter/openai/gpt-4o-mini  # ixtiyoriy
+OPENROUTER_MODEL=openai/gpt-4o                  # ixtiyoriy
 OPENROUTER_SITE_URL=http://127.0.0.1:8000       # OpenRouter statistikasi uchun
 OPENROUTER_SITE_NAME=Ustoziya Platformasi      # OpenRouter statistikasi uchun
 

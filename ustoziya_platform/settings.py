@@ -22,7 +22,7 @@ os.environ.setdefault('GOOGLE_GEMINI_API_KEY', 'AIzaSyBvR1ZG4FInUuctIpsiUCy-eCEe
 os.environ.setdefault('GOOGLE_GEMINI_MODEL', 'gemini-1.5-flash')
 os.environ.setdefault(
     'OPENROUTER_API_KEY',
-    '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',
+    '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',
 )
 
 
@@ -191,4 +191,4 @@ OPENROUTER_API_KEY = config('OPENROUTER_API_KEY', default='')
 OPENROUTER_BASE_URL = config('OPENROUTER_BASE_URL', default='https://openrouter.ai/api/v1')
 OPENROUTER_SITE_URL = config('OPENROUTER_SITE_URL', default='http://127.0.0.1:8000')
 OPENROUTER_SITE_NAME = config('OPENROUTER_SITE_NAME', default='Ustoziya Platformasi')  # Windows uchun
-OPENROUTER_MODEL = config('OPENROUTER_MODEL', default='openrouter/meta/llama-3.1-8b-instruct')
+OPENROUTER_MODEL = config('OPENROUTER_MODEL', default='openai/gpt-4o')
